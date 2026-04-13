@@ -46,7 +46,11 @@ stats_ttest_Server <- function(id){
         var.equal = identical(input$var_equal, "yes"),
         conf.level = input$conf_level
       )
-      list(result = result, group_labels = as.character(groups))
+      list(
+        result = result,
+        group_labels = as.character(groups),
+        x = x, y = y
+      )
     })
 
     print_fn <- function(){
@@ -77,6 +81,29 @@ stats_ttest_Server <- function(id){
       )
     }
 
-    bind_stats_outputs(output, input, print_fn, table_fn, "t_test")
+    plot_fn <- function(){
+      fit <- ttest_fit()
+      op <- par(mar = c(4.5, 4.5, 3, 1))
+      on.exit(par(op), add = TRUE)
+      boxplot(
+        list(fit$x, fit$y),
+        names = fit$group_labels,
+        col = c("#8ecae6", "#ffb4a2"),
+        border = "#1f3b5b",
+        main = sprintf(
+          "%s: p = %.4g",
+          input$value_var, fit$result$p.value
+        ),
+        ylab = input$value_var,
+        xlab = input$group_var
+      )
+      points(
+        x = c(1, 2),
+        y = c(mean(fit$x, na.rm = TRUE), mean(fit$y, na.rm = TRUE)),
+        pch = 18, col = "#d62828", cex = 1.5
+      )
+    }
+
+    bind_stats_outputs(output, input, print_fn, table_fn, "t_test", plot_fn)
   })
 }

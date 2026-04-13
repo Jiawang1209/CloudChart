@@ -86,14 +86,27 @@ stats_result_UI <- function(id){
     fluidRow(
       column(
         width = 12,
+        tags$h4("Plot"),
+        plotOutput(NS(id, "stats_plot"), height = "440px")
+      )
+    ),
+    tags$hr(),
+    fluidRow(
+      column(
+        width = 6,
         align = "center",
         downloadButton(NS(id, "download_results"), "Download CSV")
+      ),
+      column(
+        width = 6,
+        align = "center",
+        downloadButton(NS(id, "download_plot"), "Download Plot (PDF)")
       )
     )
   )
 }
 
-bind_stats_outputs <- function(output, input, print_fn, table_fn, filename_prefix){
+bind_stats_outputs <- function(output, input, print_fn, table_fn, filename_prefix, plot_fn = NULL){
   output$stats_summary <- renderPrint({
     validate(need(input$run_analysis > 0, "Click 'Run Analysis' to compute results."))
     print_fn()
@@ -104,12 +117,38 @@ bind_stats_outputs <- function(output, input, print_fn, table_fn, filename_prefi
     table_fn()
   }, digits = 4)
 
+  output$stats_plot <- renderPlot({
+    validate(need(input$run_analysis > 0, "Click 'Run Analysis' to compute results."))
+    if (is.null(plot_fn)) {
+      plot.new()
+      title(main = "No plot available for this module.")
+      return(invisible(NULL))
+    }
+    plot_fn()
+  })
+
   output$download_results <- downloadHandler(
     filename = function(){
       paste0(filename_prefix, "_", Sys.Date(), ".csv")
     },
     content = function(file){
       write.csv(table_fn(), file, row.names = FALSE)
+    }
+  )
+
+  output$download_plot <- downloadHandler(
+    filename = function(){
+      paste0(filename_prefix, "_plot_", Sys.Date(), ".pdf")
+    },
+    content = function(file){
+      grDevices::pdf(file, width = 8, height = 6)
+      on.exit(grDevices::dev.off(), add = TRUE)
+      if (is.null(plot_fn)) {
+        plot.new()
+        title(main = "No plot available for this module.")
+      } else {
+        plot_fn()
+      }
     }
   )
 }

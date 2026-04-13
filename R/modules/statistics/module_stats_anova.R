@@ -67,6 +67,39 @@ stats_anova_Server <- function(id){
       }
     }
 
-    bind_stats_outputs(output, input, print_fn, table_fn, "anova")
+    plot_fn <- function(){
+      fit <- anova_fit()
+      if (identical(input$post_hoc, "tukey")) {
+        op <- par(mfrow = c(1, 2), mar = c(4.5, 4.5, 3, 1))
+        on.exit(par(op), add = TRUE)
+        boxplot(
+          value ~ group, data = fit$model,
+          col = "#8ecae6", border = "#1f3b5b",
+          main = "Group distributions",
+          xlab = input$group_var, ylab = input$value_var
+        )
+        tryCatch(
+          plot(TukeyHSD(fit), las = 1, col = "#d62828"),
+          error = function(e) {
+            plot.new(); title(main = paste("TukeyHSD plot failed:", conditionMessage(e)))
+          }
+        )
+      } else {
+        op <- par(mar = c(4.5, 4.5, 3, 1))
+        on.exit(par(op), add = TRUE)
+        boxplot(
+          value ~ group, data = fit$model,
+          col = "#8ecae6", border = "#1f3b5b",
+          main = sprintf(
+            "%s by %s (ANOVA p = %.4g)",
+            input$value_var, input$group_var,
+            summary(fit)[[1]][["Pr(>F)"]][1]
+          ),
+          xlab = input$group_var, ylab = input$value_var
+        )
+      }
+    }
+
+    bind_stats_outputs(output, input, print_fn, table_fn, "anova", plot_fn)
   })
 }

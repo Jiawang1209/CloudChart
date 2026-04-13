@@ -87,6 +87,21 @@ stats_kruskal_Server <- function(id){
       }
     }
 
-    bind_stats_outputs(output, input, print_fn, table_fn, "kruskal_wallis")
+    plot_fn <- function(){
+      fit <- kruskal_fit()
+      op <- par(mar = c(4.5, 4.5, 3, 1))
+      on.exit(par(op), add = TRUE)
+      boxplot(
+        value ~ group, data = fit$data,
+        col = "#8ecae6", border = "#1f3b5b",
+        main = sprintf(
+          "%s by %s (Kruskal p = %.4g)",
+          input$value_var, input$group_var, fit$result$p.value
+        ),
+        xlab = input$group_var, ylab = input$value_var
+      )
+    }
+
+    bind_stats_outputs(output, input, print_fn, table_fn, "kruskal_wallis", plot_fn)
   })
 }

@@ -60,7 +60,8 @@ stats_wilcox_Server <- function(id){
         group_labels = as.character(groups),
         n1 = length(x),
         n2 = length(y),
-        paired = paired
+        paired = paired,
+        x = x, y = y
       )
     })
 
@@ -95,6 +96,29 @@ stats_wilcox_Server <- function(id){
       )
     }
 
-    bind_stats_outputs(output, input, print_fn, table_fn, "wilcoxon")
+    plot_fn <- function(){
+      fit <- wilcox_fit()
+      op <- par(mar = c(4.5, 4.5, 3, 1))
+      on.exit(par(op), add = TRUE)
+      boxplot(
+        list(fit$x, fit$y),
+        names = paste0(
+          fit$group_labels, "\n(n=", c(fit$n1, fit$n2), ")"
+        ),
+        col = c("#8ecae6", "#ffb4a2"),
+        border = "#1f3b5b",
+        main = sprintf(
+          "%s: W = %.3g, p = %.4g%s",
+          input$value_var,
+          unname(fit$result$statistic),
+          fit$result$p.value,
+          if (fit$paired) " [paired]" else ""
+        ),
+        ylab = input$value_var,
+        xlab = input$group_var
+      )
+    }
+
+    bind_stats_outputs(output, input, print_fn, table_fn, "wilcoxon", plot_fn)
   })
 }

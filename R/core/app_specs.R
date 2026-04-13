@@ -412,6 +412,42 @@ bgc_plot_specs <- list(
       example_data = "iris_df",
       layout = "data_tools",
       icon = "arrow-down-wide-short"
+    ),
+    list(
+      id = "data_mutate",
+      title = "Mutate / Cast",
+      parameter_ui = "data_tools_parameters_mutate_UI",
+      server_fun = "data_tools_mutate_Server",
+      example_data = "iris_df",
+      layout = "data_tools",
+      icon = "wand-magic-sparkles"
+    ),
+    list(
+      id = "data_join",
+      title = "Join Tables",
+      parameter_ui = "data_tools_parameters_join_UI",
+      server_fun = "data_tools_join_Server",
+      example_data = "iris_df",
+      layout = "data_tools",
+      icon = "link"
+    ),
+    list(
+      id = "data_group_agg",
+      title = "Group & Aggregate",
+      parameter_ui = "data_tools_parameters_group_agg_UI",
+      server_fun = "data_tools_group_agg_Server",
+      example_data = "iris_df",
+      layout = "data_tools",
+      icon = "object-group"
+    ),
+    list(
+      id = "data_export",
+      title = "Export Data",
+      parameter_ui = "data_tools_parameters_export_UI",
+      server_fun = "data_tools_export_Server",
+      example_data = "iris_df",
+      layout = "data_tools",
+      icon = "file-export"
     )
   )
 )
@@ -537,6 +573,14 @@ bgc_module_files <- list(
     "R/modules/data_tools/module_data_pivot_parameters.R",
     "R/modules/data_tools/module_data_pivot.R",
     "R/modules/data_tools/module_data_sort_distinct_parameters.R",
-    "R/modules/data_tools/module_data_sort_distinct.R"
+    "R/modules/data_tools/module_data_sort_distinct.R",
+    "R/modules/data_tools/module_data_mutate_parameters.R",
+    "R/modules/data_tools/module_data_mutate.R",
+    "R/modules/data_tools/module_data_join_parameters.R",
+    "R/modules/data_tools/module_data_join.R",
+    "R/modules/data_tools/module_data_group_agg_parameters.R",
+    "R/modules/data_tools/module_data_group_agg.R",
+    "R/modules/data_tools/module_data_export_parameters.R",
+    "R/modules/data_tools/module_data_export.R"
   )
 )
