@@ -54,7 +54,8 @@ bgc_sidebar_group <- function(text, icon_name, specs) {
   submenu_items <- lapply(
     specs,
     function(spec) {
-      menuSubItem(text = spec$title, tabName = spec$id, icon = icon("image"))
+      item_icon <- if (!is.null(spec$icon) && nzchar(spec$icon)) spec$icon else "image"
+      menuSubItem(text = spec$title, tabName = spec$id, icon = icon(item_icon))
     }
   )
 

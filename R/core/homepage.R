@@ -22,7 +22,7 @@ homepage <- function(){
       tags$br(),
       fluidRow(
         column(
-          width = 4,
+          width = 3,
           valueBox(
             value = "17",
             subtitle = "Core Plot Modules",
@@ -31,7 +31,7 @@ homepage <- function(){
           )
         ),
         column(
-          width = 4,
+          width = 3,
           valueBox(
             value = "7",
             subtitle = "Advanced Plot Modules",
@@ -40,12 +40,21 @@ homepage <- function(){
           )
         ),
         column(
-          width = 4,
+          width = 3,
           valueBox(
-            value = "CSV / TSV / XLSX",
-            subtitle = "Supported Inputs",
-            icon = icon("file-import"),
-            color = "primary"
+            value = "9",
+            subtitle = "Statistics Modules",
+            icon = icon("calculator"),
+            color = "warning"
+          )
+        ),
+        column(
+          width = 3,
+          valueBox(
+            value = "6",
+            subtitle = "Data Tools Modules",
+            icon = icon("table"),
+            color = "success"
           )
         )
       ),
@@ -67,11 +76,13 @@ homepage <- function(){
           width = 5,
           box(
             width = 12,
-            title = "Current Focus",
+            title = "What's Included",
             status = "secondary",
             solidHeader = TRUE,
-            p("The current interface keeps only the core plotting modules online."),
-            p("Unused and unfinished sections have been removed from the main workflow to improve startup speed and reduce page clutter.")
+            p(tags$b("Core Plots:"), " 17 ggplot2-based chart modules."),
+            p(tags$b("Advanced Plots:"), " PCA, PCoA, t-SNE, UMAP, RDA, volcano, correlation matrix."),
+            p(tags$b("Statistics:"), " t-test, ANOVA, correlation, linear regression, Wilcoxon, chi-square, Kruskal-Wallis, Fisher's exact, Shapiro-Wilk."),
+            p(tags$b("Data Tools:"), " filter, select / rename, summarize, missing values, pivot, sort / distinct.")
           )
         )
       ),

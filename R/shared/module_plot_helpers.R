@@ -119,8 +119,9 @@ bgc_first_match <- function(candidates, pool) {
   match_value
 }
 
-bgc_pick_column <- function(preferred = character(), fallback = character()) {
-  for (value in c(preferred, fallback)) {
+bgc_pick_column <- function(preferred = character(), ...) {
+  candidates <- c(preferred, unlist(list(...)))
+  for (value in candidates) {
     if (!is.null(value) && length(value) > 0 && !is.na(value) && nzchar(value)) {
       return(value)
     }
