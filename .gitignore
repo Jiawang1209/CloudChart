@@ -1,0 +1,30 @@
+# macOS
+.DS_Store
+
+# RStudio
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# R package build artifacts
+*.tar.gz
+*.Rcheck/
+
+# renv (uncomment when adopted)
+# renv/library/
+# renv/python/
+# renv/staging/
+
+# Logs
+*.log
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+
+# Local cache
+.omc/
