@@ -1,0 +1,81 @@
+ggplot2_parameters_treemap_UI <- function(id){
+  fluidPage(
+    fluidRow(
+      align = "center",
+      column(width = 3, bgc_column_select(id, "area_variable", "Area (numeric)")),
+      column(width = 3, bgc_column_select(id, "fill_variable", "Fill (categorical)")),
+      column(width = 3, bgc_column_select(id, "label_variable", "Label (categorical)")),
+      column(width = 3, bgc_column_select(id, "subgroup_variable", "Subgroup (optional)"))
+    ),
+    tags$hr(),
+    fluidRow(
+      align = "center",
+      column(width = 2,
+             prettyRadioButtons(NS(id, "layout"),
+                                label = "Layout",
+                                choiceNames = c("Squarified","Scol","Srow","Fixed"),
+                                choiceValues = c("squarified","scol","srow","fixed"),
+                                icon = icon("check"),
+                                animation = "tada",
+                                inline = TRUE)),
+      column(width = 2, sliderInput(NS(id, "tile_border_width"), "Border Width", value = 2, min = 0, max = 10)),
+      column(width = 2, colourInput(NS(id, "tile_border_color"), "Border Color", value = "#FFFFFF")),
+      column(width = 2, sliderInput(NS(id, "label_size"), "Label Size", value = 15, min = 5, max = 50)),
+      column(width = 2, colourInput(NS(id, "label_color"), "Label Color", value = "#FFFFFF")),
+      column(width = 2,
+             prettyRadioButtons(NS(id, "place"),
+                                label = "Label Place",
+                                choiceNames = c("Centre","Top","Bottom"),
+                                choiceValues = c("centre","top","bottom"),
+                                icon = icon("check"),
+                                animation = "tada",
+                                inline = TRUE))
+    ),
+    tags$hr(),
+    fluidRow(
+      align = "center",
+      column(width = 3,
+             prettyRadioButtons(NS(id, "show_value"),
+                                label = "Show Value in Label",
+                                choiceNames = c("No","Yes"),
+                                choiceValues = c("No","Yes"),
+                                icon = icon("check"),
+                                animation = "tada",
+                                inline = TRUE)),
+      column(width = 3,
+             prettyRadioButtons(NS(id, "grow_label"),
+                                label = "Scale Label to Fit",
+                                choiceNames = c("No","Yes"),
+                                choiceValues = c("No","Yes"),
+                                icon = icon("check"),
+                                animation = "tada",
+                                inline = TRUE))
+    ),
+    bgc_advanced_options(
+      fluidRow(
+        align = "center",
+        column(width = 4, textInput(NS(id, "plot_title"), "Set plot title", value = NULL)),
+        column(width = 4, textInput(NS(id, "plot_subtitle"), "Set plot subtitle", value = NULL))
+      ),
+      tags$hr(),
+      prettyRadioButtons(inputId = NS(id, "discrete_fill_choose"),
+                         label = "Discrete fill Palettes:",
+                         choiceNames = c("default","NPG","AAAS","NEJM","Lancet","JAMA","JCO","UCSCGB","D3","LocusZoom","IGV","UChicago"),
+                         choiceValues = c("", "scale_fill_npg","scale_fill_aaas","scale_fill_nejm","scale_fill_lancet",
+                                          "scale_fill_jama","scale_fill_jco","scale_fill_ucscgb","scale_fill_d3",
+                                          "scale_fill_locuszoom","scale_fill_igv","scale_fill_uchicago"),
+                         icon = icon("check"),
+                         animation = "tada",
+                         inline = TRUE),
+      prettyRadioButtons(inputId = NS(id, "theme_choose"),
+                         label = "Theme Choose:",
+                         choiceNames = c("default","theme:bw","theme:classic","theme:clean","theme:GraphPadPrism",
+                                         "theme:excel","theme:stata","theme:economist","theme:GoogleDocs","theme:WallStreetJournal"),
+                         choiceValues = c("theme_grey","theme_bw","theme_classic","theme_clean","theme_prism","theme_excel_new",
+                                          "theme_stata","theme_economist_white","theme_gdocs","theme_wsj"),
+                         icon = icon("check"),
+                         animation = "tada",
+                         inline = TRUE)
+    )
+  )
+}

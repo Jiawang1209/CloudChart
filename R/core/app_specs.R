@@ -36,7 +36,11 @@ bgc_group_packages <- list(
     "Rtsne",
     "umap",
     "vegan",
-    "FactoMineR"
+    "FactoMineR",
+    "ggalluvial",
+    "treemapify",
+    "ggdendro",
+    "rlang"
   ),
   statistics = c("survival"),
   data_tools = character()
@@ -179,6 +183,22 @@ bgc_plot_specs <- list(
       server_fun = "ggplot2_stacked_area_Server",
       example_data = "line_df",
       icon = "layer-group"
+    ),
+    list(
+      id = "waterfall_plot",
+      title = "Waterfall Plot",
+      parameter_ui = "ggplot2_parameters_waterfall_UI",
+      server_fun = "ggplot2_waterfall_Server",
+      example_data = "barplot_df",
+      icon = "stairs"
+    ),
+    list(
+      id = "dumbbell_plot",
+      title = "Dumbbell Plot",
+      parameter_ui = "ggplot2_parameters_dumbbell_UI",
+      server_fun = "ggplot2_dumbbell_Server",
+      example_data = "iris_df",
+      icon = "dumbbell"
     )
   ),
   advanced = list(
@@ -237,6 +257,30 @@ bgc_plot_specs <- list(
       server_fun = "ggplot2_corr_matrix_Server",
       example_data = "iris_df",
       icon = "table-cells"
+    ),
+    list(
+      id = "sankey_plot",
+      title = "Sankey / Alluvial",
+      parameter_ui = "ggplot2_parameters_sankey_UI",
+      server_fun = "ggplot2_sankey_Server",
+      example_data = "iris_df",
+      icon = "shuffle"
+    ),
+    list(
+      id = "treemap_plot",
+      title = "Treemap",
+      parameter_ui = "ggplot2_parameters_treemap_UI",
+      server_fun = "ggplot2_treemap_Server",
+      example_data = "diamond_df",
+      icon = "th-large"
+    ),
+    list(
+      id = "dendrogram_plot",
+      title = "Dendrogram",
+      parameter_ui = "ggplot2_parameters_dendrogram_UI",
+      server_fun = "ggplot2_dendrogram_Server",
+      example_data = "iris_df",
+      icon = "sitemap"
     )
   ),
   statistics = list(
@@ -515,7 +559,11 @@ bgc_module_files <- list(
     "R/modules/core/module_ggplot2_heatmap_parameters.R",
     "R/modules/core/module_ggplot2_heatmap.R",
     "R/modules/core/module_ggplot2_stacked_area_parameters.R",
-    "R/modules/core/module_ggplot2_stacked_area.R"
+    "R/modules/core/module_ggplot2_stacked_area.R",
+    "R/modules/core/module_ggplot2_waterfall_parameters.R",
+    "R/modules/core/module_ggplot2_waterfall.R",
+    "R/modules/core/module_ggplot2_dumbbell_parameters.R",
+    "R/modules/core/module_ggplot2_dumbbell.R"
   ),
   advanced = c(
     "R/modules/advanced/module_ggplot2_pca_plot_parameters.R",
@@ -531,7 +579,13 @@ bgc_module_files <- list(
     "R/modules/advanced/module_ggplot2_volcano_parameters.R",
     "R/modules/advanced/module_ggplot2_volcano.R",
     "R/modules/advanced/module_ggplot2_corr_matrix_parameters.R",
-    "R/modules/advanced/module_ggplot2_corr_matrix.R"
+    "R/modules/advanced/module_ggplot2_corr_matrix.R",
+    "R/modules/advanced/module_ggplot2_sankey_parameters.R",
+    "R/modules/advanced/module_ggplot2_sankey.R",
+    "R/modules/advanced/module_ggplot2_treemap_parameters.R",
+    "R/modules/advanced/module_ggplot2_treemap.R",
+    "R/modules/advanced/module_ggplot2_dendrogram_parameters.R",
+    "R/modules/advanced/module_ggplot2_dendrogram.R"
   ),
   statistics = c(
     "R/modules/statistics/module_stats_ttest_parameters.R",
