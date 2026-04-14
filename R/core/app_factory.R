@@ -1,5 +1,5 @@
 bgc_head <- function() {
-  bs4Dash::bs4DashHead(
+  tags$head(
     tags$style(HTML("
       .bgc-advanced-options {
         margin-top: 1rem;
@@ -17,13 +17,115 @@ bgc_head <- function() {
       .bgc-advanced-options__body {
         margin-top: 0.9rem;
       }
-    ")),
-    tags$script(src = "https://code.jquery.com/jquery-3.5.1.min.js"),
-    tags$link(
-      rel = "stylesheet",
-      href = "https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
-    ),
-    tags$script(src = "https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js")
+      .bgc-home-flex { display: flex; align-items: stretch; margin-bottom: 1rem; }
+      .bgc-home-flex > [class*='col-'] { display: flex; }
+      .bgc-home-flex > [class*='col-'] > .card {
+        width: 100%;
+        height: 100%;
+        margin-bottom: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .bgc-home-flex > [class*='col-'] > .card > .card-body {
+        flex: 1 1 auto;
+      }
+      .bgc-home-box .card-tools { display: none !important; }
+
+      .bgc-home-title {
+        margin-top: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        color: #1f3b5b;
+      }
+      .bgc-home-subtitle {
+        font-size: 17px;
+        max-width: 880px;
+        margin: 0.4rem auto 0;
+        color: #5b6b7f;
+      }
+
+      .bgc-section-header {
+        margin: 2rem 0 0.9rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid #e3e8ef;
+      }
+      .bgc-section-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f3b5b;
+        letter-spacing: 0.01em;
+      }
+      .bgc-section-header p {
+        margin: 0.25rem 0 0;
+        color: #6b7a90;
+        font-size: 0.95rem;
+      }
+
+      .bgc-feature-row { display: flex; flex-wrap: wrap; align-items: stretch; margin-bottom: 0.5rem; }
+      .bgc-feature-card {
+        background: #ffffff;
+        border: 1px solid #e3e8ef;
+        border-radius: 14px;
+        padding: 1.1rem 1.15rem 1rem;
+        box-shadow: 0 1px 3px rgba(15, 30, 60, 0.04);
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 1rem;
+        transition: transform 120ms ease, box-shadow 120ms ease;
+      }
+      .bgc-feature-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(15, 30, 60, 0.08);
+      }
+      .bgc-feature-card__head {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        margin-bottom: 0.6rem;
+      }
+      .bgc-feature-card__icon {
+        width: 42px; height: 42px;
+        border-radius: 10px;
+        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex: 0 0 auto;
+      }
+      .bgc-feature-card__title {
+        font-weight: 700;
+        font-size: 1rem;
+        color: #1f3b5b;
+        line-height: 1.25;
+      }
+      .bgc-feature-card__count {
+        font-size: 0.82rem;
+        color: #6b7a90;
+        margin-top: 0.15rem;
+      }
+      .bgc-feature-card__desc {
+        margin: 0;
+        color: #4d5d73;
+        font-size: 0.92rem;
+        line-height: 1.55;
+      }
+
+      .bgc-contact-row { display: flex; flex-wrap: wrap; align-items: stretch; margin-bottom: 1rem; }
+      .bgc-contact-cell { padding: 0.6rem 0; }
+      .bgc-contact-img {
+        border-radius: 10px;
+        border: 1px solid #e3e8ef;
+        padding: 4px;
+        background: #ffffff;
+      }
+      .bgc-contact-label {
+        margin-top: 0.5rem;
+        color: #5b6b7f;
+        font-size: 0.9rem;
+      }
+    "))
   )
 }
 
@@ -68,60 +170,6 @@ bgc_sidebar_group <- function(text, icon_name, specs) {
   )
 }
 
-bgc_placeholder_tab_name <- function(group) {
-  paste0(group, "_placeholder")
-}
-
-bgc_placeholder_menu <- function(group) {
-  cfg <- bgc_group_menu_config[[group]]
-  menuItem(
-    text = cfg$label,
-    tabName = bgc_placeholder_tab_name(group),
-    icon = icon(cfg$icon)
-  )
-}
-
-bgc_placeholder_tab <- function(group) {
-  meta <- bgc_reserved_apps[[group]]
-  cfg <- bgc_group_menu_config[[group]]
-  title <- if (!is.null(meta)) meta$title else cfg$label
-  subtitle <- if (!is.null(meta)) meta$subtitle else "This area is reserved for future modules."
-  next_steps <- if (!is.null(meta)) meta$next_steps else character()
-
-  tabItem(
-    tabName = bgc_placeholder_tab_name(group),
-    fluidPage(
-      fluidRow(
-        column(
-          width = 12,
-          box(
-            width = 12,
-            title = title,
-            status = "info",
-            solidHeader = TRUE,
-            p(subtitle),
-            p("This area is reserved as a clean scaffold for future modules.")
-          )
-        )
-      ),
-      if (length(next_steps) > 0) {
-        fluidRow(
-          column(
-            width = 12,
-            box(
-              width = 12,
-              title = "Suggested Next Steps",
-              status = "secondary",
-              solidHeader = TRUE,
-              lapply(next_steps, p)
-            )
-          )
-        )
-      }
-    )
-  )
-}
-
 bgc_plot_tabs <- function(specs) {
   lapply(
     specs,
@@ -149,7 +197,12 @@ bgc_register_plot_servers <- function(specs) {
       show_example_data_Server(spec$id, spec$example_data)
     }
     file_upload_Server(spec$id)
-    get(spec$server_fun)(spec$id)
+    tryCatch(
+      get(spec$server_fun)(spec$id),
+      error = function(e) {
+        message("[bgc] server_fun FAILED for ", spec$id, ": ", conditionMessage(e))
+      }
+    )
   }
 }
 
@@ -176,29 +229,30 @@ bgc_plot_app_ui <- function(app_title, groups, include_home = TRUE, include_intr
   for (group in groups) {
     group_specs <- bgc_plot_specs[[group]]
     if (length(group_specs) == 0) {
-      sidebar_items <- c(sidebar_items, list(bgc_placeholder_menu(group)))
-      body_items <- c(body_items, list(bgc_placeholder_tab(group)))
-    } else {
-      sidebar_items <- c(
-        sidebar_items,
-        list(bgc_sidebar_group(
-          bgc_group_menu_config[[group]]$label,
-          bgc_group_menu_config[[group]]$icon,
-          group_specs
-        ))
-      )
-      body_items <- c(body_items, bgc_plot_tabs(group_specs))
+      stop(sprintf("No modules registered for group '%s' in bgc_plot_specs.", group))
     }
+    sidebar_items <- c(
+      sidebar_items,
+      list(bgc_sidebar_group(
+        bgc_group_menu_config[[group]]$label,
+        bgc_group_menu_config[[group]]$icon,
+        group_specs
+      ))
+    )
+    body_items <- c(body_items, bgc_plot_tabs(group_specs))
   }
 
   dashboardPage(
-    bgc_head(),
     header = bgc_header(app_title),
     sidebar = dashboardSidebar(
-      width = 220,
+      width = 240,
+      collapsed = FALSE,
+      minified = FALSE,
+      expandOnHover = FALSE,
+      fixed = TRUE,
       do.call(sidebarMenu, c(list(id = "sidebarmenu"), sidebar_items))
     ),
-    body = dashboardBody(do.call(tabItems, body_items)),
+    body = dashboardBody(bgc_head(), do.call(tabItems, body_items)),
     controlbar = dashboardControlbar(
       collapsed = TRUE,
       div(class = "p-3", skinSelector()),
@@ -217,109 +271,11 @@ bgc_plot_app_server <- function(groups, include_home = TRUE) {
   force(groups)
   force(include_home)
 
-  # tab id → group lookup, so navigation events can find the right group to load.
-  tab_to_group <- list()
-  for (group in groups) {
-    for (spec in bgc_plot_specs[[group]]) {
-      tab_to_group[[spec$id]] <- group
-    }
-  }
-
   function(input, output, session) {
-    if (include_home) {
-      myCarousel_Server("myCarousel")
-    }
-
-    # Per-session tracker — module servers must be wired once per Shiny session,
-    # even if the R process already attached the packages for a previous session.
-    activated <- new.env(parent = emptyenv())
-
-    activate_group <- function(group) {
-      if (isTRUE(activated[[group]])) return(invisible())
+    for (group in groups) {
       bgc_ensure_group_loaded(group)
       bgc_register_plot_servers(bgc_plot_specs[[group]])
-      activated[[group]] <- TRUE
     }
-
-    observeEvent(input$sidebarmenu, {
-      tab <- input$sidebarmenu
-      grp <- tab_to_group[[tab]]
-      if (!is.null(grp)) activate_group(grp)
-    }, ignoreInit = FALSE)
-  }
-}
-
-bgc_reserved_app_ui <- function(app_key, include_intro = TRUE) {
-  app_meta <- bgc_reserved_apps[[app_key]]
-
-  sidebar_items <- list(
-    menuItem(text = "Overview", tabName = "reserved_home", icon = icon("house"))
-  )
-  body_items <- list(
-    tabItem(
-      tabName = "reserved_home",
-      fluidPage(
-        fluidRow(
-          column(
-            width = 12,
-            box(
-              width = 12,
-              title = app_meta$title,
-              status = "info",
-              solidHeader = TRUE,
-              p(app_meta$subtitle),
-              p("This app is reserved as a clean scaffold for future modules.")
-            )
-          )
-        ),
-        fluidRow(
-          column(
-            width = 12,
-            box(
-              width = 12,
-              title = "Suggested Next Steps",
-              status = "secondary",
-              solidHeader = TRUE,
-              lapply(app_meta$next_steps, p)
-            )
-          )
-        )
-      )
-    )
-  )
-
-  if (include_intro) {
-    sidebar_items <- c(
-      sidebar_items,
-      list(menuItem(text = "Introduction", tabName = "introduction", icon = icon("question")))
-    )
-    body_items <- c(body_items, list(Introduction_UI("introduction_markdown")))
-  }
-
-  dashboardPage(
-    bgc_head(),
-    header = bgc_header(app_meta$title),
-    sidebar = dashboardSidebar(
-      width = 120,
-      do.call(sidebarMenu, c(list(id = "sidebarmenu"), sidebar_items))
-    ),
-    body = dashboardBody(do.call(tabItems, body_items)),
-    controlbar = dashboardControlbar(
-      collapsed = TRUE,
-      div(class = "p-3", skinSelector()),
-      pinned = TRUE
-    ),
-    title = app_meta$title,
-    footer = bgc_footer(),
-    fullscreen = TRUE,
-    scrollToTop = TRUE,
-    help = TRUE,
-    preloader = list(html = tagList(waiter::spin_1(), "Loading ..."), color = "#343a40")
-  )
-}
-
-bgc_reserved_app_server <- function() {
-  function(input, output, session) {
   }
 }
 
@@ -435,7 +391,6 @@ bgc_portal_home <- function() {
 
 bgc_portal_ui <- function() {
   dashboardPage(
-    bgc_head(),
     header = bgc_header("CloudChart Hub"),
     sidebar = dashboardSidebar(
       width = 120,
@@ -446,6 +401,7 @@ bgc_portal_ui <- function() {
       )
     ),
     body = dashboardBody(
+      bgc_head(),
       do.call(
         tabItems,
         list(

@@ -51,10 +51,10 @@ Each sub app is just an `app.R` file that:
 
 | Group | What it covers |
 |---|---|
-| **Core Plots** (18) | Dot, Bubble, Bar, Line, Box, Smooth Line, Violin, Pie, Donut, Density, Density+Histogram, Histogram, Ridgeline, Lollipop, Radar, Heatmap, Stacked Area |
-| **Advanced Plots** (7) | PCA, PCoA, t-SNE, UMAP, RDA, Volcano, Correlation Matrix |
+| **Core Plots** (19) | Dot, Bubble, Bar, Line, Box, Smooth Line, Violin, Pie, Donut, Density, Density+Histogram, Histogram, Ridgeline, Lollipop, Radar, Heatmap, Stacked Area, Waterfall, Dumbbell |
+| **Advanced Plots** (10) | PCA, PCoA, t-SNE, UMAP, RDA, Volcano, Correlation Matrix, Sankey / Alluvial, Treemap, Dendrogram |
 | **Statistics** (13) | t-test, One-way ANOVA, Correlation, Linear Regression, Wilcoxon, Chi-square, Kruskal–Wallis, Fisher's Exact, Shapiro–Wilk, **Post-hoc Tests** (Tukey / pairwise t / pairwise Wilcoxon), **Logistic Regression** (OR + CI + McFadden R²), **Survival (Kaplan–Meier + log-rank)**, **Effect Size** (Cohen's d / η² / Cramér's V) |
-| **Data Tools** (6) | Filter Rows, Select / Rename, Summarize, Missing Values, Pivot Wider/Longer, Sort / Distinct |
+| **Data Tools** (10) | Filter Rows, Select / Rename, Summarize, Missing Values, Pivot Wider/Longer, Sort / Distinct, Mutate / Cast, Join Tables, Group & Aggregate, Export |
 
 Each statistics module shares the same `Example Data → Data & Parameters → Results`
 tab layout with a one-click **Run Analysis** button, printable summary, results table,

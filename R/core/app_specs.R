@@ -503,27 +503,6 @@ bgc_group_menu_config <- list(
   data_tools = list(label = "Data Tools", icon = "table")
 )
 
-bgc_reserved_apps <- list(
-  statistics = list(
-    title = "CloudChart Statistics",
-    subtitle = "Statistical tests, model summaries and comparative analysis modules will live here.",
-    next_steps = c(
-      "Add statistical module UI and server files under R/.",
-      "Register those modules in R/app_specs.R under the statistics group.",
-      "Keep heavy statistical dependencies inside this app only."
-    )
-  ),
-  data_tools = list(
-    title = "CloudChart Data Tools",
-    subtitle = "Data cleaning, reshaping, filtering and export workflows will live here.",
-    next_steps = c(
-      "Add data utility module UI and server files under R/.",
-      "Register those modules in R/app_specs.R under the data_tools group.",
-      "Use this app for preprocessing before plotting or statistics."
-    )
-  )
-)
-
 bgc_module_files <- list(
   core = c(
     "R/modules/core/module_ggplot2_dotplot_parameters.R",
