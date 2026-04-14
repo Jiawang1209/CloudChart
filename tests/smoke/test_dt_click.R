@@ -182,4 +182,30 @@ if (exists("dataTablesFilter", where = asNamespace("DT"), inherits = FALSE)) {
   cat("  SKIP DT:::dataTablesFilter not exported in this DT version\n")
 }
 
+bgc_smoke_section("bgc_preview_datatable helper")
+
+clean_preview <- tryCatch(
+  bgc_preview_datatable(iris, digits = 4),
+  error = function(e) { cat("    helper error: ", conditionMessage(e), "\n", sep = ""); NULL }
+)
+bgc_smoke_assert(
+  !is.null(clean_preview) && inherits(clean_preview, "datatables"),
+  "bgc_preview_datatable(iris) returns a DT datatables htmlwidget"
+)
+
+dirty_preview <- tryCatch(
+  bgc_preview_datatable(dirty_raw, digits = 4),
+  error = function(e) { cat("    dirty helper error: ", conditionMessage(e), "\n", sep = ""); NULL }
+)
+bgc_smoke_assert(
+  !is.null(dirty_preview) && inherits(dirty_preview, "datatables"),
+  "bgc_preview_datatable(dirty_raw) sanitizes in-line and still builds"
+)
+
+err_dt <- bgc_preview_error_dt("boom")
+bgc_smoke_assert(
+  inherits(err_dt, "datatables"),
+  "bgc_preview_error_dt returns a datatables htmlwidget for error fallback"
+)
+
 bgc_smoke_report()

@@ -16,10 +16,16 @@ data_tools_export_Server <- function(id){
       data
     })
 
-    output$transform_preview <- renderTable({
-      validate(need(input$apply_transform > 0, "Click 'Apply Transform' to prepare the export."))
-      head(prepared(), 20)
-    }, digits = 4)
+    output$transform_preview <- DT::renderDT(
+      {
+        validate(need(input$apply_transform > 0, "Click 'Apply Transform' to prepare the export."))
+        tryCatch(
+          bgc_preview_datatable(head(prepared(), 20), digits = 4),
+          error = function(e) bgc_preview_error_dt(paste("Preview failed:", conditionMessage(e)))
+        )
+      },
+      server = FALSE
+    )
 
     output$transform_summary <- renderUI({
       validate(need(input$apply_transform > 0, "Click 'Apply Transform' to prepare the export."))

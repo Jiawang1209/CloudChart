@@ -83,7 +83,7 @@ stats_result_UI <- function(id){
       column(
         width = 12,
         tags$h4("Results Table"),
-        tableOutput(NS(id, "stats_table"))
+        DT::DTOutput(NS(id, "stats_table"))
       )
     ),
     tags$hr(),
@@ -116,10 +116,16 @@ bind_stats_outputs <- function(output, input, print_fn, table_fn, filename_prefi
     print_fn()
   })
 
-  output$stats_table <- renderTable({
-    validate(need(input$run_analysis > 0, "Click 'Run Analysis' to compute results."))
-    table_fn()
-  }, digits = 4)
+  output$stats_table <- DT::renderDT(
+    {
+      validate(need(input$run_analysis > 0, "Click 'Run Analysis' to compute results."))
+      tryCatch(
+        bgc_preview_datatable(table_fn(), digits = 4),
+        error = function(e) bgc_preview_error_dt(paste("Results table failed:", conditionMessage(e)))
+      )
+    },
+    server = FALSE
+  )
 
   output$stats_plot <- renderPlot({
     validate(need(input$run_analysis > 0, "Click 'Run Analysis' to compute results."))

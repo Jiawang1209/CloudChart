@@ -82,7 +82,7 @@ data_tools_result_UI <- function(id){
       column(
         width = 12,
         tags$h4("Preview"),
-        tableOutput(NS(id, "transform_preview"))
+        DT::DTOutput(NS(id, "transform_preview"))
       )
     ),
     tags$hr(),
@@ -97,11 +97,16 @@ data_tools_result_UI <- function(id){
 }
 
 bind_data_tools_outputs <- function(output, input, transform_fn, filename_prefix, preview_rows = 20){
-  output$transform_preview <- renderTable({
-    validate(need(input$apply_transform > 0, "Click 'Apply Transform' to run."))
-    result <- transform_fn()
-    head(result, preview_rows)
-  }, digits = 4)
+  output$transform_preview <- DT::renderDT(
+    {
+      validate(need(input$apply_transform > 0, "Click 'Apply Transform' to run."))
+      tryCatch(
+        bgc_preview_datatable(head(transform_fn(), preview_rows), digits = 4),
+        error = function(e) bgc_preview_error_dt(paste("Preview failed:", conditionMessage(e)))
+      )
+    },
+    server = FALSE
+  )
 
   output$transform_summary <- renderUI({
     validate(need(input$apply_transform > 0, "Click 'Apply Transform' to run."))

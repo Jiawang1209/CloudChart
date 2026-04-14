@@ -45,8 +45,10 @@
 ### 4. 文件输入体验补完
 - [ ] 上传 widget "记住上次文件名"：在 session 内缓存 `file_upload`，
   切 tab 不重新上传。
-- [ ] Preview 表统一走 `DT::DTOutput` + 分页（已完成 file_output），检查
-  所有 module parameter UI 里可能残留的 `tableOutput`。
+- [x] Preview 表统一走 `DT::DTOutput` + 分页：`basic_stats_UI` /
+  `basic_data_tools_UI` / `module_data_export` 的 `tableOutput` 全部迁移到
+  `DT::DTOutput`，经由新的 `bgc_preview_datatable()` helper 统一走
+  `server = FALSE` + `formatSignif(digits = 4)` + tryCatch 错误回退。
 - [ ] 大文件（>50MB）上传时显示 `withProgress`，而不是静默等待。
 
 ---
@@ -67,8 +69,9 @@
   不反复重算。
 - [ ] 首页 logo / adminlte 图标走本地 `www/`，去掉残留的 CDN 外链
   （离线 / 代理环境下体验不好）。
-- [ ] 考虑把 `DT::renderDT` 的 `server = TRUE` 在小数据集下降级为
-  `server = FALSE`，规避 server-side filter 的一类 bug。
+- [x] 把 Preview / Results 的 `DT::renderDT` 降级为 `server = FALSE`，
+  规避 server-side filter 的 `searchable[j] length zero` 一类 bug；
+  小数据集下 client-side 渲染成本可忽略。
 
 ### 7. UI 一致性
 - [ ] 把 `basic_advance_plot_UI` / `basic_stats_UI` / `basic_data_tools_UI`

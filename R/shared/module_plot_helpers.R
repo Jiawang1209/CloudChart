@@ -94,6 +94,41 @@ bgc_advanced_options <- function(...) {
   )
 }
 
+bgc_preview_datatable <- function(data, digits = 4, page_length = 10) {
+  if (!is.data.frame(data)) {
+    data <- as.data.frame(data, stringsAsFactors = FALSE)
+  }
+
+  data <- sanitize_uploaded_table(data, drop_all_na_cols = FALSE)
+
+  dt <- DT::datatable(
+    data,
+    rownames = FALSE,
+    class    = "compact stripe hover",
+    options  = list(
+      pageLength = page_length,
+      lengthMenu = c(5, 10, 25, 50, 100),
+      scrollX    = TRUE,
+      dom        = "lftip"
+    )
+  )
+
+  numeric_cols <- names(data)[vapply(data, is.numeric, logical(1))]
+  if (length(numeric_cols) > 0L) {
+    dt <- DT::formatSignif(dt, columns = numeric_cols, digits = digits)
+  }
+
+  dt
+}
+
+bgc_preview_error_dt <- function(message) {
+  DT::datatable(
+    data.frame(Error = message),
+    rownames = FALSE,
+    options  = list(dom = "t", ordering = FALSE)
+  )
+}
+
 bgc_column_select <- function(id, input_id, label, selected = "") {
   selectizeInput(
     inputId = NS(id, input_id),
