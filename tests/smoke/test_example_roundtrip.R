@@ -286,4 +286,54 @@ bgc_smoke_assert(
   "bgc_serialize_inputs output round-trips through yaml::as.yaml / yaml.load"
 )
 
+bgc_smoke_section("bgc_reproduce_script() emits valid R")
+
+rv_repro <- shiny::reactiveValues(
+  x_axis = "Sepal.Length",
+  y_axis = "Sepal.Width",
+  label_size = 12,
+  plot_title = "Demo",
+  colour = c("red", "blue")
+)
+script_lines <- shiny::isolate(bgc_reproduce_script("dot_plot", rv_repro))
+script_text <- paste(script_lines, collapse = "\n")
+
+bgc_smoke_assert(
+  is.character(script_lines) && length(script_lines) > 10L,
+  "bgc_reproduce_script returns a non-trivial character vector"
+)
+bgc_smoke_assert(
+  grepl("CloudChart reproduce script -- dot_plot", script_text, fixed = TRUE),
+  "reproduce script header names the module"
+)
+bgc_smoke_assert(
+  grepl("library(ggplot2)", script_text, fixed = TRUE) &&
+    grepl("library(dplyr)", script_text, fixed = TRUE),
+  "reproduce script loads ggplot2 and dplyr"
+)
+bgc_smoke_assert(
+  grepl("x_axis = \"Sepal.Length\"", script_text, fixed = TRUE) &&
+    grepl("y_axis = \"Sepal.Width\"", script_text, fixed = TRUE) &&
+    grepl("label_size = 12", script_text, fixed = TRUE) &&
+    grepl("plot_title = \"Demo\"", script_text, fixed = TRUE),
+  "reproduce script serializes scalar parameters as R literals"
+)
+bgc_smoke_assert(
+  grepl("colour = c(\"red\", \"blue\")", script_text, fixed = TRUE),
+  "reproduce script serializes short character vectors via c()"
+)
+bgc_smoke_assert(
+  tryCatch({ parse(text = script_text); TRUE }, error = function(e) FALSE),
+  "reproduce script parses as valid R"
+)
+
+rv_empty <- shiny::reactiveValues()
+empty_script <- shiny::isolate(bgc_reproduce_script("empty_mod", rv_empty))
+bgc_smoke_assert(
+  any(grepl("(no parameters captured)", empty_script, fixed = TRUE)) &&
+    tryCatch({ parse(text = paste(empty_script, collapse = "\n")); TRUE },
+             error = function(e) FALSE),
+  "reproduce script handles empty input gracefully and still parses"
+)
+
 bgc_smoke_report()

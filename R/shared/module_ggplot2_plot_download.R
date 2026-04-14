@@ -36,27 +36,24 @@ ggplot2_plot_download_UI <- function(id){
       column(
         width = 2,
         align = "center",
-        downloadBttn(
-          outputId = NS(id, "DownloadParams"),
-          label = "Params",
-          color = "default",
-          style = "bordered",
-          size = "sm"
+        shinyWidgets::dropdownButton(
+          inputId = NS(id, "export_menu"),
+          label = "Export",
+          icon = icon("file-export"),
+          circle = FALSE,
+          status = "default",
+          size = "sm",
+          width = "220px",
+          tags$div(
+            style = "padding: 4px 8px; min-width: 180px; display: flex; flex-direction: column; gap: 6px;",
+            downloadLink(NS(id, "DownloadParams"), "Parameters (.yaml)"),
+            downloadLink(NS(id, "DownloadData"),   "Processed data (.csv)"),
+            downloadLink(NS(id, "DownloadScript"), "Reproduce script (.R)")
+          )
         )
       ),
       column(
         width = 2,
-        align = "center",
-        downloadBttn(
-          outputId = NS(id, "DownloadData"),
-          label = "Data",
-          color = "default",
-          style = "bordered",
-          size = "sm"
-        )
-      ),
-      column(
-        width = 1,
         align = "center",
         numericInputIcon(
           inputId = NS(id, "Width"),
@@ -66,7 +63,7 @@ ggplot2_plot_download_UI <- function(id){
         )
       ),
       column(
-        width = 1,
+        width = 2,
         align = "center",
         numericInputIcon(
           inputId = NS(id, "Height"),

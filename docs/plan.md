@@ -65,8 +65,12 @@
   `yaml` 加入 `bgc_group_packages$base`。新增 10 条冒烟断言覆盖
   `bgc_plot_extension` / `bgc_plot_device` 三格式写入 / `bgc_serialize_inputs`
   过滤规则 + yaml round-trip。
-- [ ] 每个模块支持 **"复现脚本" 导出**：把当前 input 参数序列化成一段
-  可运行的 R 代码块，用户贴回 RStudio 就能复现。
+- [x] 每个模块支持 **"复现脚本" 导出**：`bgc_reproduce_script()` 把当前
+  input 序列化成一段带 `library()` / `params <- list(...)` / 数据加载
+  stub / ggplot2 骨架的 R 代码块，用户贴回 RStudio 替换 `df` 即可继续
+  分析。`output$DownloadScript` 由 `bind_plot_outputs()` 自动注册，所有
+  40 个 plot 模块零改动继承。下载 UI 用 `shinyWidgets::dropdownButton`
+  把 Params / Data / Script 收进 "Export" 菜单，主按钮维持 "Plot"。
 
 ### 6. 性能与启动
 - [x] Lazy tab materialization（tab body + server + 包加载）—— 冷启动

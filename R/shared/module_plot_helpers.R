@@ -411,6 +411,62 @@ bgc_serialize_inputs <- function(input) {
   keep
 }
 
+bgc_to_r_literal <- function(v) {
+  if (is.character(v)) {
+    if (length(v) == 1L) return(deparse(v))
+    return(paste0("c(", paste(vapply(v, deparse, character(1)), collapse = ", "), ")"))
+  }
+  if (is.logical(v) || is.numeric(v)) {
+    if (length(v) == 1L) return(as.character(v))
+    return(paste0("c(", paste(as.character(v), collapse = ", "), ")"))
+  }
+  deparse(v)
+}
+
+bgc_reproduce_script <- function(filename_prefix, input) {
+  snapshot <- bgc_serialize_inputs(input)
+
+  param_body <- if (length(snapshot) == 0L) {
+    "  # (no parameters captured)"
+  } else {
+    nms <- names(snapshot)
+    entries <- vapply(seq_along(snapshot), function(i) {
+      sprintf("  %s = %s", nms[i], bgc_to_r_literal(snapshot[[i]]))
+    }, character(1))
+    paste(entries, collapse = ",\n")
+  }
+
+  c(
+    sprintf("# CloudChart reproduce script -- %s", filename_prefix),
+    sprintf("# generated %s", format(Sys.time(), "%Y-%m-%d %H:%M:%S")),
+    "#",
+    "# This script captures the parameters you used in CloudChart so you can",
+    "# continue the analysis in your own R session. Replace the data-loading",
+    "# stub with your real file and adapt the plotting block as needed.",
+    "",
+    "library(ggplot2)",
+    "library(dplyr)",
+    "",
+    "# 1. Load your data ----------------------------------------------------",
+    "# df <- read.csv(\"path/to/your_file.csv\", check.names = FALSE)",
+    "df <- NULL  # <-- replace with your data.frame",
+    "",
+    "# 2. CloudChart parameters ---------------------------------------------",
+    "params <- list(",
+    param_body,
+    ")",
+    "",
+    "# 3. Reproduce the plot ------------------------------------------------",
+    "# Paste the ggplot2 recipe that matches your CloudChart module here,",
+    "# using `df` and `params`. Minimal skeleton:",
+    "#",
+    "# p <- ggplot(df, aes(x = .data[[params$x_axis]], y = .data[[params$y_axis]])) +",
+    "#   geom_point()",
+    "# print(p)",
+    ""
+  )
+}
+
 bind_plot_outputs <- function(output, input, plot_reactive, vals, filename_prefix, data_fn = NULL) {
   output$plotOutput <- renderPlot({
     plot_reactive()
@@ -456,6 +512,15 @@ bind_plot_outputs <- function(output, input, plot_reactive, vals, filename_prefi
       } else {
         utils::write.csv(df, file, row.names = FALSE)
       }
+    }
+  )
+
+  output$DownloadScript <- downloadHandler(
+    filename = function() {
+      paste0(filename_prefix, "_reproduce_", Sys.Date(), ".R")
+    },
+    content = function(file) {
+      writeLines(bgc_reproduce_script(filename_prefix, input), file)
     }
   )
 
