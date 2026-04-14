@@ -129,23 +129,8 @@ ggplot2_density_plot_2_Server <- function(id){
       vals$p <- p
     })
     
-    output$plotOutput <- renderPlot({
-      dot_plot_reac()
-    })
-    
-    output$Download <- downloadHandler(
-      filename = function(){paste0("Density_Plot_", Sys.Date(),".pdf")},
-      content = function(file){
-        pdf(file = file, height = input$Height, width = input$Width)
-        print(vals$p)
-        dev.off()
-      }
-    )
-    
-    output$interactive_plot <- renderPlotly({
-      ggplotly(dot_plot_reac())
-    })
-    
+    bind_plot_outputs(output, input, dot_plot_reac, vals, "Density_Plot")
+
   })
-  
+
 }
