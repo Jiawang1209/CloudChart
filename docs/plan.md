@@ -56,9 +56,15 @@
 ## 中期（1–2 个月）
 
 ### 5. 统一结果导出
-- [ ] `bind_plot_outputs()`：把 core / advanced 当前各自的 Download 按钮、
-  plotly 互动图、处理后数据 CSV 导出抽象成和 `bind_stats_outputs()` 对称
-  的 helper，一次性得到 PNG / PDF / SVG + 参数 yaml + 处理后 CSV。
+- [x] `bind_plot_outputs()`：在现有 helper 基础上扩出 PDF / PNG / SVG 三档
+  切换（`input$Format` radioGroupButtons），新增 `DownloadParams`（当前
+  input 序列化为 yaml，过滤 `file_upload` / `file_output_*` / 按钮等控制项）
+  与 `DownloadData`（可选 `data_fn` 返回处理后 data.frame → CSV）。
+  40 个 plot 模块（27 现代 + 13 迁移）统一继承，无需改模块。
+  `ggplot2_plot_download_UI` 同步加入 Format / Params / Data 三枚按钮。
+  `yaml` 加入 `bgc_group_packages$base`。新增 10 条冒烟断言覆盖
+  `bgc_plot_extension` / `bgc_plot_device` 三格式写入 / `bgc_serialize_inputs`
+  过滤规则 + yaml round-trip。
 - [ ] 每个模块支持 **"复现脚本" 导出**：把当前 input 参数序列化成一段
   可运行的 R 代码块，用户贴回 RStudio 就能复现。
 

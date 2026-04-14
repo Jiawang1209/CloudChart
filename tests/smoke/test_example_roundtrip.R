@@ -200,4 +200,90 @@ if (has_writexl) {
   cat("  SKIP writexl not installed; xlsx round-trip not exercised\n")
 }
 
+bgc_smoke_section("plot export helpers (format dispatch)")
+
+bgc_smoke_assert(
+  identical(bgc_plot_extension("PDF"), "pdf") &&
+    identical(bgc_plot_extension("pdf"), "pdf") &&
+    identical(bgc_plot_extension("PNG"), "png") &&
+    identical(bgc_plot_extension("svg"), "svg") &&
+    identical(bgc_plot_extension(NULL), "pdf") &&
+    identical(bgc_plot_extension(""), "pdf"),
+  "bgc_plot_extension dispatches PDF/PNG/SVG and falls back to pdf"
+)
+
+fake_plot <- ggplot2::ggplot(iris, ggplot2::aes(Sepal.Length, Sepal.Width)) +
+  ggplot2::geom_point()
+
+pdf_out <- tempfile(fileext = ".pdf")
+png_out <- tempfile(fileext = ".png")
+svg_out <- tempfile(fileext = ".svg")
+on.exit(unlink(c(pdf_out, png_out, svg_out)), add = TRUE, after = FALSE)
+
+for (fmt in c("PDF", "PNG", "SVG")) {
+  target <- switch(fmt, PDF = pdf_out, PNG = png_out, SVG = svg_out)
+  ok <- tryCatch({
+    bgc_plot_device(fmt, target, width = 4, height = 3)
+    print(fake_plot)
+    grDevices::dev.off()
+    TRUE
+  }, error = function(e) { grDevices::graphics.off(); FALSE })
+
+  bgc_smoke_assert(
+    isTRUE(ok) && file.exists(target) && file.info(target)$size > 0L,
+    sprintf("bgc_plot_device writes non-empty %s file", fmt)
+  )
+}
+
+bgc_smoke_section("bgc_serialize_inputs() filters shiny internals")
+
+fake_input <- shiny::reactiveValues(
+  Plot = 3,
+  Download = 1,
+  Format = "PNG",
+  file_upload = list(name = "x.csv", datapath = "/tmp/x.csv"),
+  file_output_rows_selected = c(1, 2, 3),
+  submit_file = 0,
+  x_axis = "Sepal.Length",
+  y_axis = "Sepal.Width",
+  label_size = 12,
+  build_interactive_plot = 0,
+  plot_title = "Demo",
+  colour = c("red", "blue", "green")
+)
+
+snapshot <- shiny::isolate(bgc_serialize_inputs(fake_input))
+
+bgc_smoke_assert(
+  is.list(snapshot) && length(snapshot) > 0L,
+  "bgc_serialize_inputs returns a non-empty list"
+)
+bgc_smoke_assert(
+  identical(snapshot$x_axis, "Sepal.Length") &&
+    identical(snapshot$y_axis, "Sepal.Width") &&
+    identical(snapshot$label_size, 12) &&
+    identical(snapshot$plot_title, "Demo"),
+  "bgc_serialize_inputs keeps plain atomic plot parameters"
+)
+bgc_smoke_assert(
+  is.null(snapshot$Plot) && is.null(snapshot$Download) && is.null(snapshot$Format) &&
+    is.null(snapshot$submit_file) && is.null(snapshot$build_interactive_plot),
+  "bgc_serialize_inputs drops action/download/format control inputs"
+)
+bgc_smoke_assert(
+  is.null(snapshot$file_upload) && is.null(snapshot$file_output_rows_selected),
+  "bgc_serialize_inputs drops file_upload and file_output_* internals"
+)
+bgc_smoke_assert(
+  identical(snapshot$colour, c("red", "blue", "green")),
+  "bgc_serialize_inputs keeps short atomic vectors"
+)
+
+yaml_blob <- yaml::as.yaml(snapshot)
+yaml_rt <- yaml::yaml.load(yaml_blob)
+bgc_smoke_assert(
+  is.list(yaml_rt) && identical(yaml_rt$x_axis, "Sepal.Length"),
+  "bgc_serialize_inputs output round-trips through yaml::as.yaml / yaml.load"
+)
+
 bgc_smoke_report()

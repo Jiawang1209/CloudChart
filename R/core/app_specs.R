@@ -14,7 +14,8 @@ bgc_group_packages <- list(
     "colourpicker",
     "waiter",
     "DT",
-    "readxl"
+    "readxl",
+    "yaml"
   ),
   core = c(
     "ggplot2",

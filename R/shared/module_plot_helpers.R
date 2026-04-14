@@ -362,20 +362,100 @@ apply_plot_limits <- function(p, input) {
   p
 }
 
-bind_plot_outputs <- function(output, input, plot_reactive, vals, filename_prefix) {
+bgc_default <- function(value, fallback) {
+  if (is.null(value)) return(fallback)
+  if (length(value) == 0L) return(fallback)
+  if (is.character(value) && !nzchar(value)) return(fallback)
+  value
+}
+
+bgc_plot_device <- function(format, file, width, height) {
+  fmt <- toupper(bgc_default(format, "PDF"))
+  if (fmt == "PNG") {
+    grDevices::png(filename = file, width = width, height = height, units = "in", res = 300)
+  } else if (fmt == "SVG") {
+    grDevices::svg(filename = file, width = width, height = height)
+  } else {
+    grDevices::pdf(file = file, width = width, height = height)
+  }
+}
+
+bgc_plot_extension <- function(format) {
+  switch(toupper(bgc_default(format, "PDF")), PNG = "png", SVG = "svg", "pdf")
+}
+
+bgc_serialize_inputs <- function(input) {
+  raw <- tryCatch(
+    shiny::reactiveValuesToList(input, all.names = FALSE),
+    error = function(e) list()
+  )
+
+  drop_prefixes <- c("file_output", "file_upload")
+  drop_exact <- c(
+    "submit_file", "Plot", "Download", "DownloadParams", "DownloadData",
+    "build_interactive_plot", "Format", "file_header", "file_separator", "file_quote"
+  )
+
+  keep <- list()
+  for (nm in sort(names(raw))) {
+    if (startsWith(nm, ".")) next
+    if (nm %in% drop_exact) next
+    if (any(vapply(drop_prefixes, function(p) startsWith(nm, p), logical(1)))) next
+    v <- raw[[nm]]
+    if (is.null(v)) next
+    if (!is.atomic(v)) next
+    if (length(v) == 0L || length(v) > 64L) next
+    if (is.list(v)) next
+    keep[[nm]] <- as.vector(v)
+  }
+  keep
+}
+
+bind_plot_outputs <- function(output, input, plot_reactive, vals, filename_prefix, data_fn = NULL) {
   output$plotOutput <- renderPlot({
     plot_reactive()
   })
 
   output$Download <- downloadHandler(
     filename = function() {
-      paste0(filename_prefix, "_", Sys.Date(), ".pdf")
+      paste0(filename_prefix, "_", Sys.Date(), ".", bgc_plot_extension(input$Format))
     },
     content = function(file) {
       req(!is.null(vals$p))
-      pdf(file = file, height = input$Height, width = input$Width)
+      bgc_plot_device(input$Format, file, input$Width, input$Height)
+      on.exit(grDevices::dev.off(), add = TRUE)
       print(vals$p)
-      dev.off()
+    }
+  )
+
+  output$DownloadParams <- downloadHandler(
+    filename = function() {
+      paste0(filename_prefix, "_params_", Sys.Date(), ".yaml")
+    },
+    content = function(file) {
+      snapshot <- bgc_serialize_inputs(input)
+      header <- paste0("# CloudChart parameters for ", filename_prefix,
+                       " (", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), ")\n")
+      body <- if (length(snapshot) > 0L) yaml::as.yaml(snapshot) else "# no parameters captured\n"
+      writeLines(c(header, body), file)
+    }
+  )
+
+  output$DownloadData <- downloadHandler(
+    filename = function() {
+      paste0(filename_prefix, "_data_", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      df <- if (is.function(data_fn)) {
+        tryCatch(data_fn(), error = function(e) NULL)
+      } else {
+        NULL
+      }
+      if (is.null(df) || !is.data.frame(df) || nrow(df) == 0L) {
+        writeLines("# no processed data available for this module", file)
+      } else {
+        utils::write.csv(df, file, row.names = FALSE)
+      }
     }
   )
 
