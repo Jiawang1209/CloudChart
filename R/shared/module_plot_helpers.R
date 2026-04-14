@@ -1,3 +1,39 @@
+sanitize_uploaded_table <- function(data, drop_all_na_cols = TRUE) {
+  if (!is.data.frame(data)) {
+    stop("sanitize_uploaded_table expects a data.frame.", call. = FALSE)
+  }
+
+  if (ncol(data) == 0L) {
+    return(data)
+  }
+
+  nm <- as.character(names(data))
+  nm[is.na(nm)] <- ""
+  nm <- trimws(nm)
+
+  blank_idx <- which(!nzchar(nm))
+  if (length(blank_idx) > 0L) {
+    nm[blank_idx] <- paste0("V", blank_idx)
+  }
+
+  if (anyDuplicated(nm) > 0L) {
+    nm <- make.unique(nm, sep = "_")
+  }
+
+  names(data) <- nm
+
+  if (isTRUE(drop_all_na_cols) && ncol(data) > 0L) {
+    keep <- vapply(
+      data,
+      function(col) !all(is.na(col)),
+      logical(1)
+    )
+    data <- data[, keep, drop = FALSE]
+  }
+
+  data
+}
+
 read_uploaded_table <- function(file_upload, header, separator, quote, row_names = FALSE) {
   tryCatch(
     {
@@ -5,42 +41,44 @@ read_uploaded_table <- function(file_upload, header, separator, quote, row_names
       auto <- identical(separator, "auto")
       is_xlsx <- ext %in% c("xlsx", "xls") || identical(separator, "xlsx2")
 
-      if (is_xlsx) {
-        data <- as.data.frame(
+      data <- if (is_xlsx) {
+        raw <- as.data.frame(
           readxl::read_excel(path = file_upload$datapath),
           check.names = FALSE
         )
 
         if (isTRUE(row_names)) {
-          if (ncol(data) < 2) {
+          if (ncol(raw) < 2) {
             stop("The uploaded Excel file must contain at least two columns when the first column is used as row names.")
           }
-          rownames(data) <- data[[1]]
-          data <- data[-1]
+          rownames(raw) <- raw[[1]]
+          raw <- raw[-1]
         }
 
-        return(data)
-      }
-
-      sep <- if (auto) {
-        switch(ext,
-          tsv = "\t",
-          tab = "\t",
-          txt = "\t",
-          ","
-        )
+        raw
       } else {
-        separator
+        sep <- if (auto) {
+          switch(ext,
+            tsv = "\t",
+            tab = "\t",
+            txt = "\t",
+            ","
+          )
+        } else {
+          separator
+        }
+
+        read.csv(
+          file = file_upload$datapath,
+          header = header,
+          sep = sep,
+          quote = quote,
+          row.names = if (isTRUE(row_names)) 1 else NULL,
+          check.names = FALSE
+        )
       }
 
-      read.csv(
-        file = file_upload$datapath,
-        header = header,
-        sep = sep,
-        quote = quote,
-        row.names = if (isTRUE(row_names)) 1 else NULL,
-        check.names = FALSE
-      )
+      sanitize_uploaded_table(data)
     },
     error = function(e) {
       stop(paste("Failed to read uploaded file:", conditionMessage(e)), call. = FALSE)

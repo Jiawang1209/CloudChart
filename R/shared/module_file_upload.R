@@ -58,6 +58,20 @@ file_upload_show_UI <- function(id){
 }
 
 
+bgc_upload_error_panel <- function(message) {
+  tags$div(
+    style = "padding: 12px 14px; border: 1px solid #f5c2c7; border-radius: 12px; background: #f8d7da; color: #842029;",
+    tags$div(
+      style = "font-weight: 600; margin-bottom: 6px;",
+      "Upload failed"
+    ),
+    tags$p(
+      style = "margin-bottom: 0; white-space: pre-wrap;",
+      message
+    )
+  )
+}
+
 file_upload_Server <- function(id){
   moduleServer(id, function(input, output, session){
     df <- uploaded_table_reactive(input)
@@ -67,7 +81,18 @@ file_upload_Server <- function(id){
         need(!is.null(df()), "Upload a file and click 'Submit File!' to view the data summary.")
       )
 
-      summary_info <- bgc_data_summary(df())
+      frame <- df()
+      summary_info <- tryCatch(
+        bgc_data_summary(frame),
+        error = function(e) NULL
+      )
+
+      if (is.null(summary_info)) {
+        return(bgc_upload_error_panel(
+          "Could not summarize the uploaded file. Check that the file has non-empty, uniquely named columns."
+        ))
+      }
+
       uploaded_name <- if (!is.null(input$file_upload)) input$file_upload$name else "-"
 
       fluidRow(
@@ -136,16 +161,25 @@ file_upload_Server <- function(id){
         need(!is.null(df()), "Upload a file and click 'Submit File!' to preview data.")
       )
 
-      DT::datatable(
-        df(),
-        rownames = FALSE,
-        class = "compact stripe hover",
-        options = list(
-          pageLength = 10,
-          lengthMenu = c(10, 25, 50, 100),
-          scrollX = TRUE,
-          dom = "lftip"
-        )
+      tryCatch(
+        DT::datatable(
+          df(),
+          rownames = FALSE,
+          class = "compact stripe hover",
+          options = list(
+            pageLength = 10,
+            lengthMenu = c(10, 25, 50, 100),
+            scrollX = TRUE,
+            dom = "lftip"
+          )
+        ),
+        error = function(e) {
+          DT::datatable(
+            data.frame(Error = paste("Preview failed:", conditionMessage(e))),
+            rownames = FALSE,
+            options = list(dom = "t", ordering = FALSE)
+          )
+        }
       )
     })
   })

@@ -1,27 +1,37 @@
 # CloudChart 后续计划
 
-> **当前状态**：Hub + 4 个子应用（core 21 / advanced 13 / statistics 16 / data_tools 14，共 **64 个模块**）已跑通。Tab body 与 module server 均为 lazy 挂载：点开哪个 tab 才构建对应 `bs4TabCard`、注册对应 `moduleServer`、attach 该组依赖包。**冷启动 3.27s → 0.55s（6×）**，UI build **2.0s → 0.11s（18×）**。`tests/smoke/` 下 3 个脚本、486 个断言一键执行，通过 `Rscript tests/smoke/run_all.R` 验证 registry / example 回环 / lazy 启动。
+> **当前状态**：Hub + 4 个子应用（core 21 / advanced 13 / statistics 16 / data_tools 14，共 **64 个模块**）已跑通。Tab body 与 module server 均为 lazy 挂载：点开哪个 tab 才构建对应 `bs4TabCard`、注册对应 `moduleServer`、attach 该组依赖包。**冷启动 3.27s → 0.55s（6×）**，UI build **2.0s → 0.11s（18×）**。`tests/smoke/` 下 4 个脚本、**512 个断言**一键执行，通过 `Rscript tests/smoke/run_all.R` 验证 registry / example 回环 / lazy 启动 / 上传+DT filter 链路。
 
 ---
 
 ## 近期（1–2 周）
 
 ### 1. 上传 / DataTable 链路加固
-- [ ] 复现 "Submit File 后 DT `searchable[j] argument is of length zero`"：
-  需要一个对应的 smoke 回归，不仅仅是 `read_uploaded_table` 层面，还要
-  走到 `DT::renderDT` 的 server-side path。
-- [ ] 在 `file_upload_Server` 的 `renderDT` 外层加 `tryCatch`，把错误写入
-  `output$file_summary`，不再把原始 JS warning 抛给用户。
-- [ ] `read_uploaded_table` 读到结果后做一次 "健康检查"：去重列名、
-  剔除 0 长度的列名、剔除全 NA 列，避免 DT server-side filter 崩溃。
-- [ ] `.xlsx` / `.tsv` 上传的单独回归用例（当前 smoke 只覆盖 csv）。
+- [x] 复现 "Submit File 后 DT `searchable[j] argument is of length zero`"：
+  `tests/smoke/test_dt_click.R` 走 `shiny::testServer()` 驱动
+  `file_upload_Server` + 直接调用 `DT:::dataTablesFilter()` 同时覆盖
+  "submit → sanitize → render" 和 server-side filter path，并带一条
+  "长度为零" 回归探针（缺 `q$escape` 时才触发）。
+- [x] 在 `file_upload_Server` 的 `renderDT` 外层加 `tryCatch`，失败时
+  渲染成单行 "Preview failed: …" 表而不是抛裸 JS warning；
+  `renderUI` 里 `bgc_data_summary()` 也外包 tryCatch，坏帧走
+  红色 `bgc_upload_error_panel()`。
+- [x] `read_uploaded_table` 读到结果后调用 `sanitize_uploaded_table()`：
+  trim 列名空白、空/NA 名补 `V<idx>`、`make.unique()` 去重、默认丢掉
+  全 NA 列（可 `drop_all_na_cols = FALSE` 保留）。合法列名原样保留。
+- [x] `.xlsx` / `.tsv` 单独回归用例入 `test_example_roundtrip.R`
+  （xlsx 要 `writexl`，缺失时 skip 不 fail）。
 
 ### 2. 回归测试扩展
 - [x] `tests/smoke/test_module_registry.R`、`test_example_roundtrip.R`、
-  `test_lazy_boot.R` 与 `run_all.R` runner（486 断言全绿）。
+  `test_lazy_boot.R`、`test_dt_click.R` 与 `run_all.R` runner（512 断言全绿）。
 - [ ] 加一个 headless Playwright / chromote 脚本：启动 hub → 对每个组第一个
-  模块点 Preview Example → 断言 DT 无 console error。回归 jQuery /
-  bootstrap-select / DT searchable 类问题。
+  模块点 Preview Example → 断言 DT 无 console error。**环境注记**：本机
+  chromote 0.5.1 + Chrome 当前组合下 "Chrome debugging port not open"，即使
+  `--headless=new` + 隔离 `--user-data-dir` 也起不来；直接 shell 跑 Chrome
+  DevTools 端口能开——怀疑是 chromote 的 stderr scrape 在新版 Chrome 下
+  漏读。暂用 in-process `testServer` + `DT:::dataTablesFilter()` mock
+  顶上，这一条留作跨环境真浏览器冒烟的后续项。
 - [ ] 在 CI（或本地 `make smoke`）里串起 `Rscript tests/smoke/run_all.R`
   + headless 点击脚本，PR 合并前必跑。
 

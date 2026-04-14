@@ -14,7 +14,8 @@ if (!file.exists("R/core/app_bootstrap.R")) {
 scripts <- c(
   "tests/smoke/test_module_registry.R",
   "tests/smoke/test_example_roundtrip.R",
-  "tests/smoke/test_lazy_boot.R"
+  "tests/smoke/test_lazy_boot.R",
+  "tests/smoke/test_dt_click.R"
 )
 
 rscript <- file.path(R.home("bin"), "Rscript")
