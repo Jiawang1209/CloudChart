@@ -1,28 +1,46 @@
 read_uploaded_table <- function(file_upload, header, separator, quote, row_names = FALSE) {
   tryCatch(
     {
-      if (separator == "xlsx2") {
-        data <- as.data.frame(readxl::read_xlsx(path = file_upload$datapath), check.names = FALSE)
+      ext <- tolower(tools::file_ext(file_upload$name))
+      auto <- identical(separator, "auto")
+      is_xlsx <- ext %in% c("xlsx", "xls") || identical(separator, "xlsx2")
+
+      if (is_xlsx) {
+        data <- as.data.frame(
+          readxl::read_excel(path = file_upload$datapath),
+          check.names = FALSE
+        )
 
         if (isTRUE(row_names)) {
           if (ncol(data) < 2) {
-            stop("The uploaded xlsx file must contain at least two columns when the first column is used as row names.")
+            stop("The uploaded Excel file must contain at least two columns when the first column is used as row names.")
           }
           rownames(data) <- data[[1]]
           data <- data[-1]
         }
 
-        data
-      } else {
-        read.csv(
-          file = file_upload$datapath,
-          header = header,
-          sep = separator,
-          quote = quote,
-          row.names = if (isTRUE(row_names)) 1 else NULL,
-          check.names = FALSE
-        )
+        return(data)
       }
+
+      sep <- if (auto) {
+        switch(ext,
+          tsv = "\t",
+          tab = "\t",
+          txt = "\t",
+          ","
+        )
+      } else {
+        separator
+      }
+
+      read.csv(
+        file = file_upload$datapath,
+        header = header,
+        sep = sep,
+        quote = quote,
+        row.names = if (isTRUE(row_names)) 1 else NULL,
+        check.names = FALSE
+      )
     },
     error = function(e) {
       stop(paste("Failed to read uploaded file:", conditionMessage(e)), call. = FALSE)

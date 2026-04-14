@@ -1,64 +1,47 @@
 file_upload_UI <- function(id){
   tagList(
     fileInput(
-      inputId = NS(id, "file_upload"), 
+      inputId = NS(id, "file_upload"),
       label = "Choose Input File",
-      multiple = FALSE, 
-      accept = c(".tsv",".csv",".xlsx")
+      multiple = FALSE,
+      accept = c(".csv", ".tsv", ".txt", ".xlsx", ".xls")
     ),
-    # Horizontal line
     tags$hr(),
-    # Input: Checkbox if file own header
     awesomeCheckbox(
-      inputId = NS(id, "file_header"), 
+      inputId = NS(id, "file_header"),
       label = "Header",
       value = TRUE
     ),
-    # Horizontal line
     tags$hr(),
-    # Input: Select separator
     radioGroupButtons(
       inputId = NS(id, "file_separator"),
-      label = "Separator",
-      choiceNames = c("csv","txt","xlsx"),
-      choiceValues = c(",", "\t", "xlsx2"),
+      label = "Format",
+      choiceNames = c("Auto", "csv", "tsv", "xlsx"),
+      choiceValues = c("auto", ",", "\t", "xlsx2"),
+      selected = "auto",
       checkIcon = list(yes = tags$i(class = "fa fa-check-square",
                                     style = "color: steelblue"),
-                       no = tags$i(class = "fa fa-square-o", 
-                                   style = "color: steelblue")
-                       ),
-                      ),
+                       no = tags$i(class = "fa fa-square-o",
+                                   style = "color: steelblue"))
+    ),
     tags$hr(),
-    # Input: Select quotes
     radioGroupButtons(
       inputId = NS(id, "file_quote"),
       label = "Quote",
-      choiceNames = c('None','Double Quote','Single Quote'),
-      choiceValues = c('', '"', "'"),
+      choiceNames = c("Double Quote", "Single Quote", "None"),
+      choiceValues = c("\"", "'", ""),
+      selected = "\"",
       checkIcon = list(yes = tags$i(class = "fa fa-check-square",
                                     style = "color: steelblue"),
-                       no = tags$i(class = "fa fa-square-o", 
+                       no = tags$i(class = "fa fa-square-o",
                                    style = "color: steelblue"))
     ),
     tags$hr(),
-    # Input: Select number of rows to display
-    radioGroupButtons(
-      inputId = NS(id, "file_display"), 
-      label = "Display",
-      choiceNames = c("Head","All"),
-      choiceValues = c("head", "all"),
-      checkIcon = list(yes = tags$i(class = "fa fa-check-square",
-                                    style = "color: steelblue"),
-                       no = tags$i(class = "fa fa-square-o", 
-                                   style = "color: steelblue"))
-    ),
-    tags$hr(),
-    # Submit file
     actionButton(
       inputId = NS(id, "submit_file"),
       label = "Submit File!",
       status = "info"
-      )
+    )
   )
 }
 
@@ -68,9 +51,9 @@ file_upload_show_UI <- function(id){
       outputId = NS(id, "file_summary")
     ),
     tags$br(),
-    tableOutput(
+    DT::DTOutput(
       outputId = NS(id, "file_output")
-      )
+    )
   )
 }
 
@@ -85,6 +68,7 @@ file_upload_Server <- function(id){
       )
 
       summary_info <- bgc_data_summary(df())
+      uploaded_name <- if (!is.null(input$file_upload)) input$file_upload$name else "-"
 
       fluidRow(
         column(
@@ -94,6 +78,10 @@ file_upload_Server <- function(id){
             tags$div(
               style = "font-weight: 600; color: #1f3b5b; margin-bottom: 8px;",
               "Data Summary"
+            ),
+            tags$p(
+              style = "margin-bottom: 6px;",
+              paste0("File: ", uploaded_name)
             ),
             tags$p(
               style = "margin-bottom: 6px;",
@@ -142,17 +130,23 @@ file_upload_Server <- function(id){
         )
       )
     })
-    
-    output$file_output <- renderTable({
+
+    output$file_output <- DT::renderDT({
       validate(
         need(!is.null(df()), "Upload a file and click 'Submit File!' to preview data.")
       )
 
-      if (input$file_display == "head") {
-        return(head(df()))
-      }else{
-        return(df())
-      }
+      DT::datatable(
+        df(),
+        rownames = FALSE,
+        class = "compact stripe hover",
+        options = list(
+          pageLength = 10,
+          lengthMenu = c(10, 25, 50, 100),
+          scrollX = TRUE,
+          dom = "lftip"
+        )
+      )
     })
   })
 }

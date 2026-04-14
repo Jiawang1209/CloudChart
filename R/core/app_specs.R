@@ -12,7 +12,9 @@ bgc_group_packages <- list(
     "bs4Dash",
     "shinyWidgets",
     "colourpicker",
-    "waiter"
+    "waiter",
+    "DT",
+    "readxl"
   ),
   core = c(
     "ggplot2",
@@ -42,7 +44,7 @@ bgc_group_packages <- list(
     "ggdendro",
     "rlang"
   ),
-  statistics = c("survival"),
+  statistics = c("survival", "lme4"),
   data_tools = character()
 )
 
@@ -199,6 +201,22 @@ bgc_plot_specs <- list(
       server_fun = "ggplot2_dumbbell_Server",
       example_data = "iris_df",
       icon = "dumbbell"
+    ),
+    list(
+      id = "slope_chart",
+      title = "Slope Chart",
+      parameter_ui = "ggplot2_parameters_slope_chart_UI",
+      server_fun = "ggplot2_slope_chart_Server",
+      example_data = "line_df",
+      icon = "chart-line"
+    ),
+    list(
+      id = "waffle_chart",
+      title = "Waffle Chart",
+      parameter_ui = "ggplot2_parameters_waffle_UI",
+      server_fun = "ggplot2_waffle_Server",
+      example_data = "pie_df",
+      icon = "table-cells-large"
     )
   ),
   advanced = list(
@@ -281,6 +299,30 @@ bgc_plot_specs <- list(
       server_fun = "ggplot2_dendrogram_Server",
       example_data = "iris_df",
       icon = "sitemap"
+    ),
+    list(
+      id = "nmds_plot",
+      title = "NMDS Plot",
+      parameter_ui = "ggplot2_parameters_nmds_UI",
+      server_fun = "ggplot2_nmds_Server",
+      example_data = "iris_df",
+      icon = "compass"
+    ),
+    list(
+      id = "manhattan_plot",
+      title = "Manhattan Plot",
+      parameter_ui = "ggplot2_parameters_manhattan_UI",
+      server_fun = "ggplot2_manhattan_Server",
+      example_data = "iris_df",
+      icon = "city"
+    ),
+    list(
+      id = "ma_plot",
+      title = "MA Plot",
+      parameter_ui = "ggplot2_parameters_ma_plot_UI",
+      server_fun = "ggplot2_ma_plot_Server",
+      example_data = "violent_df",
+      icon = "braille"
     )
   ),
   statistics = list(
@@ -400,6 +442,33 @@ bgc_plot_specs <- list(
       example_data = "iris_df",
       layout = "stats",
       icon = "ruler-horizontal"
+    ),
+    list(
+      id = "stats_permutation",
+      title = "Permutation Test",
+      parameter_ui = "stats_parameters_permutation_UI",
+      server_fun = "stats_permutation_Server",
+      example_data = "iris_df",
+      layout = "stats",
+      icon = "shuffle"
+    ),
+    list(
+      id = "stats_mixed_effects",
+      title = "Mixed Effects Model",
+      parameter_ui = "stats_parameters_mixed_effects_UI",
+      server_fun = "stats_mixed_effects_Server",
+      example_data = "iris_df",
+      layout = "stats",
+      icon = "layer-group"
+    ),
+    list(
+      id = "stats_pairwise",
+      title = "Pairwise Comparison",
+      parameter_ui = "stats_parameters_pairwise_UI",
+      server_fun = "stats_pairwise_Server",
+      example_data = "iris_df",
+      layout = "stats",
+      icon = "table-cells"
     )
   ),
   data_tools = list(
@@ -492,6 +561,42 @@ bgc_plot_specs <- list(
       example_data = "iris_df",
       layout = "data_tools",
       icon = "file-export"
+    ),
+    list(
+      id = "data_separate_unite",
+      title = "Separate / Unite",
+      parameter_ui = "data_tools_parameters_separate_unite_UI",
+      server_fun = "data_tools_separate_unite_Server",
+      example_data = "iris_df",
+      layout = "data_tools",
+      icon = "scissors"
+    ),
+    list(
+      id = "data_date_parse",
+      title = "Parse Date / Time",
+      parameter_ui = "data_tools_parameters_date_parse_UI",
+      server_fun = "data_tools_date_parse_Server",
+      example_data = "iris_df",
+      layout = "data_tools",
+      icon = "calendar-days"
+    ),
+    list(
+      id = "data_duplicates",
+      title = "Find Duplicates",
+      parameter_ui = "data_tools_parameters_duplicates_UI",
+      server_fun = "data_tools_duplicates_Server",
+      example_data = "iris_df",
+      layout = "data_tools",
+      icon = "clone"
+    ),
+    list(
+      id = "data_sample_slice",
+      title = "Sample / Slice",
+      parameter_ui = "data_tools_parameters_sample_slice_UI",
+      server_fun = "data_tools_sample_slice_Server",
+      example_data = "iris_df",
+      layout = "data_tools",
+      icon = "scissors"
     )
   )
 )
@@ -542,7 +647,11 @@ bgc_module_files <- list(
     "R/modules/core/module_ggplot2_waterfall_parameters.R",
     "R/modules/core/module_ggplot2_waterfall.R",
     "R/modules/core/module_ggplot2_dumbbell_parameters.R",
-    "R/modules/core/module_ggplot2_dumbbell.R"
+    "R/modules/core/module_ggplot2_dumbbell.R",
+    "R/modules/core/module_ggplot2_slope_chart_parameters.R",
+    "R/modules/core/module_ggplot2_slope_chart.R",
+    "R/modules/core/module_ggplot2_waffle_parameters.R",
+    "R/modules/core/module_ggplot2_waffle.R"
   ),
   advanced = c(
     "R/modules/advanced/module_ggplot2_pca_plot_parameters.R",
@@ -564,7 +673,13 @@ bgc_module_files <- list(
     "R/modules/advanced/module_ggplot2_treemap_parameters.R",
     "R/modules/advanced/module_ggplot2_treemap.R",
     "R/modules/advanced/module_ggplot2_dendrogram_parameters.R",
-    "R/modules/advanced/module_ggplot2_dendrogram.R"
+    "R/modules/advanced/module_ggplot2_dendrogram.R",
+    "R/modules/advanced/module_ggplot2_nmds_parameters.R",
+    "R/modules/advanced/module_ggplot2_nmds.R",
+    "R/modules/advanced/module_ggplot2_manhattan_parameters.R",
+    "R/modules/advanced/module_ggplot2_manhattan.R",
+    "R/modules/advanced/module_ggplot2_ma_plot_parameters.R",
+    "R/modules/advanced/module_ggplot2_ma_plot.R"
   ),
   statistics = c(
     "R/modules/statistics/module_stats_ttest_parameters.R",
@@ -592,7 +707,13 @@ bgc_module_files <- list(
     "R/modules/statistics/module_stats_survival_parameters.R",
     "R/modules/statistics/module_stats_survival.R",
     "R/modules/statistics/module_stats_effect_size_parameters.R",
-    "R/modules/statistics/module_stats_effect_size.R"
+    "R/modules/statistics/module_stats_effect_size.R",
+    "R/modules/statistics/module_stats_permutation_parameters.R",
+    "R/modules/statistics/module_stats_permutation.R",
+    "R/modules/statistics/module_stats_mixed_effects_parameters.R",
+    "R/modules/statistics/module_stats_mixed_effects.R",
+    "R/modules/statistics/module_stats_pairwise_parameters.R",
+    "R/modules/statistics/module_stats_pairwise.R"
   ),
   data_tools = c(
     "R/modules/data_tools/module_data_filter_parameters.R",
@@ -614,6 +735,14 @@ bgc_module_files <- list(
     "R/modules/data_tools/module_data_group_agg_parameters.R",
     "R/modules/data_tools/module_data_group_agg.R",
     "R/modules/data_tools/module_data_export_parameters.R",
-    "R/modules/data_tools/module_data_export.R"
+    "R/modules/data_tools/module_data_export.R",
+    "R/modules/data_tools/module_data_separate_unite_parameters.R",
+    "R/modules/data_tools/module_data_separate_unite.R",
+    "R/modules/data_tools/module_data_date_parse_parameters.R",
+    "R/modules/data_tools/module_data_date_parse.R",
+    "R/modules/data_tools/module_data_duplicates_parameters.R",
+    "R/modules/data_tools/module_data_duplicates.R",
+    "R/modules/data_tools/module_data_sample_slice_parameters.R",
+    "R/modules/data_tools/module_data_sample_slice.R"
   )
 )

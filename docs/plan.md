@@ -1,79 +1,122 @@
-# CloudChart 未来计划
+# CloudChart 后续计划
 
-> 当前状态：Hub + 4 个子应用（core 19 / advanced 10 / statistics 13 / data_tools 10，共 52 个模块）已跑通。首页、测试数据预览、所有模块 server 已在 session 初始化时 eager 注册。
+> **当前状态**：Hub + 4 个子应用（core 21 / advanced 13 / statistics 16 / data_tools 14，共 **64 个模块**）已跑通。Tab body 与 module server 均为 lazy 挂载：点开哪个 tab 才构建对应 `bs4TabCard`、注册对应 `moduleServer`、attach 该组依赖包。**冷启动 3.27s → 0.55s（6×）**，UI build **2.0s → 0.11s（18×）**。`tests/smoke/` 下 3 个脚本、486 个断言一键执行，通过 `Rscript tests/smoke/run_all.R` 验证 registry / example 回环 / lazy 启动。
 
 ---
 
 ## 近期（1–2 周）
 
-### 1. 稳定性与回归测试
-- [ ] `tests/smoke/` 下补齐 4 个组的冒烟脚本：加载 app、逐个 spec 校验 `server_fun` / `example_data` / `parameter_ui` 可解析。
-- [ ] 增加一个 "启动并点一遍 Preview Example" 的 Playwright/chromote 脚本，回归检测 jQuery / bootstrap-select 之类的 UI 冲突。
-- [ ] 把 `[bgc]` 级别的诊断日志收敛到 `options(bgc.debug = TRUE)` 开关，避免 CI 输出噪音。
+### 1. 上传 / DataTable 链路加固
+- [ ] 复现 "Submit File 后 DT `searchable[j] argument is of length zero`"：
+  需要一个对应的 smoke 回归，不仅仅是 `read_uploaded_table` 层面，还要
+  走到 `DT::renderDT` 的 server-side path。
+- [ ] 在 `file_upload_Server` 的 `renderDT` 外层加 `tryCatch`，把错误写入
+  `output$file_summary`，不再把原始 JS warning 抛给用户。
+- [ ] `read_uploaded_table` 读到结果后做一次 "健康检查"：去重列名、
+  剔除 0 长度的列名、剔除全 NA 列，避免 DT server-side filter 崩溃。
+- [ ] `.xlsx` / `.tsv` 上传的单独回归用例（当前 smoke 只覆盖 csv）。
 
-### 2. 模块补缺
-- [ ] **core**：补 waffle / streamgraph / slope chart 等常见但尚未覆盖的类型。
-- [ ] **advanced**：补 NMDS、CCA（RDA 的近亲）、MA plot、Manhattan。
-- [ ] **statistics**：补 permutation test、mixed effects (lme4)、多重比较矩阵可视化。
-- [ ] **data_tools**：补 unite/separate、date parsing、duplicates 检测、sample/slice。
+### 2. 回归测试扩展
+- [x] `tests/smoke/test_module_registry.R`、`test_example_roundtrip.R`、
+  `test_lazy_boot.R` 与 `run_all.R` runner（486 断言全绿）。
+- [ ] 加一个 headless Playwright / chromote 脚本：启动 hub → 对每个组第一个
+  模块点 Preview Example → 断言 DT 无 console error。回归 jQuery /
+  bootstrap-select / DT searchable 类问题。
+- [ ] 在 CI（或本地 `make smoke`）里串起 `Rscript tests/smoke/run_all.R`
+  + headless 点击脚本，PR 合并前必跑。
 
-### 3. 文件输入体验
-- [ ] 上传模块支持 `.xlsx`（readxl）与 `.tsv`，当前只支持 csv。
-- [ ] Preview 表支持分页（DT）而非 `tableOutput`，大文件不崩。
-- [ ] 记住上一次上传文件名，避免每次切 tab 重新上传。
+### 3. 日志与诊断
+- [ ] 把现存所有 `cat("[bgc] …")` / `message("[bgc] …")` 统一收敛到
+  `bgc_log(..., level = "debug")`，由 `options(bgc.debug = TRUE)` 开关驱动，
+  默认关闭，避免 CI / 生产输出噪音。
+- [ ] `bgc_loaded_groups` 状态暴露一个 `bgc_debug_report()` 辅助函数，
+  dump 当前已加载组 + 时间戳，便于排查 lazy 加载时序问题。
+
+### 4. 文件输入体验补完
+- [ ] 上传 widget "记住上次文件名"：在 session 内缓存 `file_upload`，
+  切 tab 不重新上传。
+- [ ] Preview 表统一走 `DT::DTOutput` + 分页（已完成 file_output），检查
+  所有 module parameter UI 里可能残留的 `tableOutput`。
+- [ ] 大文件（>50MB）上传时显示 `withProgress`，而不是静默等待。
 
 ---
 
 ## 中期（1–2 个月）
 
-### 4. 统一结果导出
-- [ ] 把 `bind_stats_outputs()` 的模式推广到 core/advanced：`bind_plot_outputs()` 统一 PNG/PDF/SVG + 处理后数据 CSV 导出。
-- [ ] 每个模块支持 "复现脚本" 导出（把当前参数序列化成可运行的 R 代码块）。
+### 5. 统一结果导出
+- [ ] `bind_plot_outputs()`：把 core / advanced 当前各自的 Download 按钮、
+  plotly 互动图、处理后数据 CSV 导出抽象成和 `bind_stats_outputs()` 对称
+  的 helper，一次性得到 PNG / PDF / SVG + 参数 yaml + 处理后 CSV。
+- [ ] 每个模块支持 **"复现脚本" 导出**：把当前 input 参数序列化成一段
+  可运行的 R 代码块，用户贴回 RStudio 就能复现。
 
-### 5. 性能与启动
-- [ ] `bgc_ensure_group_loaded()` 改成真正的 lazy：用户首次进入该 group 的 tab 时再 `library()`，而不是 server 初始化就全部 attach。
-- [ ] 大模块（PCA/UMAP）的计算结果在 session 内 memoise，切换参数不反复重算。
-- [ ] 首页图片/图标走本地 `www/` 而不是外链 CDN，去掉残留的网络依赖。
+### 6. 性能与启动
+- [x] Lazy tab materialization（tab body + server + 包加载）—— 冷启动
+  3.27s → 0.55s。
+- [ ] PCA / UMAP / t-SNE 的计算结果在 session 内 `memoise`，切换美化参数
+  不反复重算。
+- [ ] 首页 logo / adminlte 图标走本地 `www/`，去掉残留的 CDN 外链
+  （离线 / 代理环境下体验不好）。
+- [ ] 考虑把 `DT::renderDT` 的 `server = TRUE` 在小数据集下降级为
+  `server = FALSE`，规避 server-side filter 的一类 bug。
 
-### 6. UI 一致性
-- [ ] 把 `basic_advance_plot_UI` / `basic_stats_UI` / `basic_data_tools_UI` 抽出一个共同 shell，四类 tab 的控件/标签顺序完全一致。
-- [ ] 参数面板使用可折叠的 `details`（已有 `.bgc-advanced-options` 样式），把 "高级选项" 收起。
-- [ ] Dark / Light 皮肤在首页 feature card、valueBox 下都保持可读。
+### 7. UI 一致性
+- [ ] 把 `basic_advance_plot_UI` / `basic_stats_UI` / `basic_data_tools_UI`
+  抽出一个共同 shell，四类 tab 的 Example / Data / Run / Results 顺序
+  完全一致。
+- [ ] 参数面板统一使用 `bgc_advanced_options()`（已存在的
+  `<details>` 组件），把 "Advanced Options" 默认收起。
+- [ ] Dark / Light 皮肤在首页 feature card、valueBox、DT 表头下都保持
+  足够对比度。
 
-### 7. 文档与示例
-- [ ] `docs/modules/` 为每个模块写一页最小示例（输入列、参数、输出样例），Introduction tab 直接引用。
-- [ ] README 补齐 "添加一个新模块" 的 5 步 checklist（目前在 CLAUDE.md 内，应该给最终用户看）。
+### 8. 文档与示例
+- [ ] `docs/modules/` 为每个模块写一页最小示例（输入列 / 参数 / 输出样例），
+  Introduction tab 直接引用。
+- [ ] README 增加 "故障排查" 一节：DT 报错、jQuery 冲突、pandoc 缺失、
+  lme4 编译失败等高频问题。
 - [ ] 写一篇 "从 iris 到论文图" 的 end-to-end 教程。
 
 ---
 
 ## 长期（季度级）
 
-### 8. 部署
-- [ ] Dockerfile + docker-compose（R + renv + 依赖锁定）。
+### 9. 部署
+- [ ] `Dockerfile` + `docker-compose`（R + renv + 依赖锁定）。
 - [ ] shinyapps.io / Posit Connect 部署说明。
 - [ ] 公网演示站点（只开 core + advanced，关闭文件写入）。
 
-### 9. 数据持久化（可选）
-- [ ] 登录后保存 "最近打开的分析"。目前纯 stateless，不做登录；如果加，优先 sqlite + 本地模式。
+### 10. 数据持久化（可选）
+- [ ] 登录后保存 "最近打开的分析"。目前纯 stateless，不做登录；如果加，
+  优先 sqlite + 本地模式。
 
-### 10. 扩展生态
-- [ ] 外部贡献者只需新增 `R/modules/<group>/module_<name>*.R` + 在 `app_specs.R` 追加一条 spec 就能加模块，完善开发者文档。
-- [ ] 把 `bgc_plot_specs` 结构抽成 `tools/register_module.R` 交互脚本，降低注册出错概率。
+### 11. 扩展生态
+- [ ] `tools/register_module.R` 交互脚本：向导式注册新模块，自动生成
+  两个 module 文件骨架 + 追加到 `app_specs.R` + 追加到 `bgc_module_files`，
+  降低外部贡献者出错概率。
+- [ ] 外部模块包机制：支持 `bgc_plugin::register("<group>", spec, files)`，
+  不需要改主仓库就能装第三方模块。
 
 ---
 
 ## 非目标（明确不做）
 
-- 不引入 Node / bundler / TS，保持纯 R + Shiny。
-- 不做登录 / 多租户 / 云存储（与"桌面级科研工具"定位冲突）。
-- 不替换 bs4Dash；主题与布局都依赖它提供的网格与组件。
-- 不追求 90%+ 测试覆盖，冒烟 + 手工回归为主。
+- 不引入 Node / bundler / TypeScript，保持纯 R + Shiny。
+- 不做登录 / 多租户 / 云存储（与 "桌面级科研工具" 定位冲突）。
+- 不替换 bs4Dash；主题与布局依赖它提供的网格与组件。
+- 不追求 90%+ 单元测试覆盖；以冒烟 + 回归点击脚本 + 手工验收为主。
 
 ---
 
 ## 风险与观察点
 
-- **bs4Dash 升级风险**：`sidebarMenu` 未暴露 `input$sidebarmenu` 绑定，当前靠 eager 注册回避。后续升级要重新确认这个行为。
-- **jQuery 冲突**：任何从 CDN 引入 jQuery / bootstrap 的改动都可能破坏 `shinyWidgets` 的 selectpicker / pickerInput。PR 里涉及 `bgc_head()` 的改动要重点审查。
-- **外链资源**：首页 logo 和 adminlte 图标来自外链，离线/代理环境下 404 不影响功能但体验差——搬到 `www/` 是必要清理。
+- **bs4Dash 升级风险**：lazy 挂载依赖 `sidebarMenu(id = "sidebarmenu")`
+  通过 `input$sidebarmenu` 暴露当前 tabName。升级 bs4Dash 后需再次确认；
+  若行为回归，需要降级为 eager 注册或改为 `input$<tabName>` 轮询方案。
+- **jQuery / bootstrap-select 冲突**：任何从 CDN 引入 jQuery / bootstrap
+  的改动都可能破坏 `shinyWidgets` 的 selectpicker / pickerInput。涉及
+  `bgc_head()` 的 PR 需要重点审查并跑 headless click smoke。
+- **DT `searchable[j]` 类故障**：DT server-side filter 对列名空字符串 /
+  重复列名非常敏感。所有进入 `DT::datatable` 的数据都应先走一层
+  "列名健康检查"（见近期 §1）。
+- **外链资源**：首页 logo、adminlte 图标来自外链，离线 / 代理环境下
+  404 不影响功能但体验差——搬到 `www/` 是必要清理。

@@ -170,40 +170,58 @@ bgc_sidebar_group <- function(text, icon_name, specs) {
   )
 }
 
+bgc_body_fn_for <- function(spec) {
+  layout <- if (is.null(spec$layout)) "plot" else spec$layout
+  switch(
+    layout,
+    stats      = basic_stats_body,
+    data_tools = basic_data_tools_body,
+    basic_advance_plot_body
+  )
+}
+
 bgc_plot_tabs <- function(specs) {
   lapply(
     specs,
     function(spec) {
-      layout <- if (is.null(spec$layout)) "plot" else spec$layout
-      ui_fn <- switch(
-        layout,
-        stats = basic_stats_UI,
-        data_tools = basic_data_tools_UI,
-        basic_advance_plot_UI
-      )
-      ui_fn(
+      tabItem(
         tabName = spec$id,
-        inputid = spec$id,
-        title = spec$title,
-        fun = spec$parameter_ui
+        header_tabItem(title = spec$title),
+        uiOutput(NS(spec$id, "tab_body"))
       )
     }
   )
 }
 
-bgc_register_plot_servers <- function(specs) {
-  for (spec in specs) {
-    if (!is.null(spec$example_data) && nzchar(spec$example_data)) {
-      show_example_data_Server(spec$id, spec$example_data)
-    }
-    file_upload_Server(spec$id)
-    tryCatch(
-      get(spec$server_fun)(spec$id),
-      error = function(e) {
-        message("[bgc] server_fun FAILED for ", spec$id, ": ", conditionMessage(e))
+bgc_register_plot_servers <- function(specs, group, active_tab, output) {
+  for (spec in specs) local({
+    spec <- spec
+    installed <- FALSE
+    body_fn <- bgc_body_fn_for(spec)
+
+    observeEvent(active_tab(), {
+      if (!identical(active_tab(), spec$id)) return()
+      if (installed) return()
+      installed <<- TRUE
+
+      bgc_ensure_group_loaded(group)
+
+      output[[paste0(spec$id, "-tab_body")]] <- renderUI({
+        body_fn(spec$id, spec$parameter_ui)
+      })
+
+      if (!is.null(spec$example_data) && nzchar(spec$example_data)) {
+        show_example_data_Server(spec$id, spec$example_data)
       }
-    )
-  }
+      file_upload_Server(spec$id)
+      tryCatch(
+        get(spec$server_fun)(spec$id),
+        error = function(e) {
+          message("[bgc] server_fun FAILED for ", spec$id, ": ", conditionMessage(e))
+        }
+      )
+    }, ignoreNULL = TRUE, ignoreInit = FALSE)
+  })
 }
 
 bgc_plot_app_ui <- function(app_title, groups, include_home = TRUE, include_intro = TRUE) {
@@ -272,9 +290,9 @@ bgc_plot_app_server <- function(groups, include_home = TRUE) {
   force(include_home)
 
   function(input, output, session) {
+    active_tab <- reactive(input$sidebarmenu)
     for (group in groups) {
-      bgc_ensure_group_loaded(group)
-      bgc_register_plot_servers(bgc_plot_specs[[group]])
+      bgc_register_plot_servers(bgc_plot_specs[[group]], group, active_tab, output)
     }
   }
 }

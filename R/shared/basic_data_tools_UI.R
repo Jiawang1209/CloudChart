@@ -1,53 +1,57 @@
+basic_data_tools_body <- function(inputid, fun){
+  fluidPage(
+    bs4TabCard(
+      width = 12,
+      type = "pills",
+
+      tabPanel(
+        title = "Example Data",
+        fluidPage(
+          fluidRow(
+            column(
+              width = 12,
+              align = "center",
+              show_example_data_UI(id = inputid)
+            )
+          )
+        )
+      ),
+
+      tabPanel(
+        title = "Data & Parameters",
+        fluidPage(
+          fluidRow(
+            column(
+              width = 3,
+              file_upload_UI(id = inputid)
+            ),
+            column(
+              width = 9,
+              file_upload_show_UI(id = inputid)
+            )
+          )
+        ),
+        tags$hr(),
+        fluidPage(
+          get(fun)(inputid)
+        )
+      ),
+
+      tabPanel(
+        title = "Result",
+        fluidPage(
+          data_tools_result_UI(id = inputid)
+        )
+      )
+    )
+  )
+}
+
 basic_data_tools_UI <- function(tabName, inputid, title, fun){
   tabItem(
     tabName = tabName,
     header_tabItem(title = title),
-    fluidPage(
-      bs4TabCard(
-        width = 12,
-        type = "pills",
-
-        tabPanel(
-          title = "Example Data",
-          fluidPage(
-            fluidRow(
-              column(
-                width = 12,
-                align = "center",
-                show_example_data_UI(id = inputid)
-              )
-            )
-          )
-        ),
-
-        tabPanel(
-          title = "Data & Parameters",
-          fluidPage(
-            fluidRow(
-              column(
-                width = 3,
-                file_upload_UI(id = inputid)
-              ),
-              column(
-                width = 9,
-                file_upload_show_UI(id = inputid)
-              )
-            )
-          ),
-          tags$hr(),
-          fluidPage(
-            get(fun)(inputid)
-          )
-        ),
-
-        tabPanel(
-          title = "Result",
-          fluidPage(
-            data_tools_result_UI(id = inputid)
-          )
-        )
-      )
-    )
+    basic_data_tools_body(inputid, fun)
   )
 }
 
