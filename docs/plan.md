@@ -75,8 +75,12 @@
 ### 6. 性能与启动
 - [x] Lazy tab materialization（tab body + server + 包加载）—— 冷启动
   3.27s → 0.55s。
-- [ ] PCA / UMAP / t-SNE 的计算结果在 session 内 `memoise`，切换美化参数
-  不反复重算。
+- [x] PCA / UMAP / t-SNE / PCoA / NMDS 计算结果走 `bgc_cached_compute()`：
+  全局 `bgc_dr_cache_env` + `digest::xxhash64`，key 包含算法 id + 输入
+  矩阵 + 可调参数（seed / distance / k / trymax / correction），命中
+  直接返回，失命才调用真 compute。切换美化参数不触发重算，连续切到
+  同一组合的降维无成本。提供 `bgc_dr_cache_clear()` / `bgc_dr_cache_size()`
+  辅助 + 6 条冒烟断言覆盖命中 / key 变化 / 数据突变 / 清空。
 - [ ] 首页 logo / adminlte 图标走本地 `www/`，去掉残留的 CDN 外链
   （离线 / 代理环境下体验不好）。
 - [x] 把 Preview / Results 的 `DT::renderDT` 降级为 `server = FALSE`，

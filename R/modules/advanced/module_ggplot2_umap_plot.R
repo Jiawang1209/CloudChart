@@ -41,9 +41,15 @@ ggplot2_umap_Server <- function(id){
     
     # UMAP
     UMAP_out <- reactive({
-      set.seed(2023)
-      validate_matrix_input(analysis_input()$feature_data, min_feature_columns = 2)
-      umap::umap(analysis_input()$feature_data)
+      fd <- analysis_input()$feature_data
+      validate_matrix_input(fd, min_feature_columns = 2)
+      bgc_cached_compute(
+        key = list("umap::umap", fd, seed = 2023),
+        compute = function() {
+          set.seed(2023)
+          umap::umap(fd)
+        }
+      )
     })
     
     UMAP_table.pca <- reactive({

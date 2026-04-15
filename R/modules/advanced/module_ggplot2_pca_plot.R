@@ -39,10 +39,14 @@ ggplot2_pca_Server <- function(id){
       bgc_analysis_input(df(), metadata_columns)
     })
     
-    # PCA 
+    # PCA
     PCA_out <- reactive({
-      validate_matrix_input(analysis_input()$feature_data, min_feature_columns = 2)
-      FactoMineR::PCA(analysis_input()$feature_data, graph = FALSE)
+      fd <- analysis_input()$feature_data
+      validate_matrix_input(fd, min_feature_columns = 2)
+      bgc_cached_compute(
+        key = list("FactoMineR::PCA", fd),
+        compute = function() FactoMineR::PCA(fd, graph = FALSE)
+      )
     })
     
     PCA_table.pca <- reactive({

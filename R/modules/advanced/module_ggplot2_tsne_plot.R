@@ -29,10 +29,17 @@ ggplot2_tsne_Server <- function(id){
     # Set Continues fill
     Plot_Discrete_color <- reactive({input$discrete_color_choose})
     
-    # PCA 
+    # t-SNE
     Rtsne_out <- reactive({
-      set.seed(input$set_seed)
-      tsne_out <- Rtsne(unique(df()[,-ncol(df())]),  dims = 2, perplexity = 2, pca = T)
+      raw <- unique(df()[, -ncol(df())])
+      seed <- input$set_seed
+      bgc_cached_compute(
+        key = list("Rtsne::Rtsne", raw, seed = seed, dims = 2, perplexity = 2, pca = TRUE),
+        compute = function() {
+          set.seed(seed)
+          Rtsne(raw, dims = 2, perplexity = 2, pca = TRUE)
+        }
+      )
     })
     
     Rtsne.pca <- reactive({

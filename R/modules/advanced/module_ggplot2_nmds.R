@@ -41,19 +41,28 @@ ggplot2_nmds_Server <- function(id){
       validate_matrix_input(ai$feature_data, min_feature_columns = 2)
 
       mat <- as.matrix(ai$feature_data)
-      if (input$distance %in% c("bray","jaccard") && any(mat < 0, na.rm = TRUE)) {
-        validate(need(FALSE, paste0(input$distance, " distance requires non-negative values.")))
+      distance <- input$distance
+      k_dim <- input$k_dim
+      trymax <- input$trymax
+
+      if (distance %in% c("bray","jaccard") && any(mat < 0, na.rm = TRUE)) {
+        validate(need(FALSE, paste0(distance, " distance requires non-negative values.")))
       }
 
       tryCatch(
-        suppressWarnings(vegan::metaMDS(
-          mat,
-          distance = input$distance,
-          k = input$k_dim,
-          trymax = input$trymax,
-          autotransform = FALSE,
-          trace = 0
-        )),
+        bgc_cached_compute(
+          key = list("vegan::metaMDS", mat, distance = distance, k = k_dim, trymax = trymax),
+          compute = function() {
+            suppressWarnings(vegan::metaMDS(
+              mat,
+              distance = distance,
+              k = k_dim,
+              trymax = trymax,
+              autotransform = FALSE,
+              trace = 0
+            ))
+          }
+        ),
         error = function(e) {
           validate(need(FALSE, paste("metaMDS failed:", conditionMessage(e))))
         }

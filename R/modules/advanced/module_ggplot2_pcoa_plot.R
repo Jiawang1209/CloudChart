@@ -29,10 +29,17 @@ ggplot2_pcoa_Server <- function(id){
     # Set Continues fill
     Plot_Discrete_color <- reactive({input$discrete_color_choose})
     
-    # PCA 
+    # PCoA
     PCoA_out <- reactive({
-      pcoa_bray_dist <- vegdist(df()[,-ncol(df())], method = "bray")
-      pcoa(pcoa_bray_dist,correction = input$pcoa_correlation_method)
+      raw <- df()[, -ncol(df())]
+      correction <- input$pcoa_correlation_method
+      bgc_cached_compute(
+        key = list("ape::pcoa.bray", raw, correction = correction),
+        compute = function() {
+          pcoa_bray_dist <- vegdist(raw, method = "bray")
+          pcoa(pcoa_bray_dist, correction = correction)
+        }
+      )
     })
     
     PCoA_table.pca <- reactive({

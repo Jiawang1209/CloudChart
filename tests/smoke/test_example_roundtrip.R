@@ -336,4 +336,50 @@ bgc_smoke_assert(
   "reproduce script handles empty input gracefully and still parses"
 )
 
+bgc_smoke_section("bgc_cached_compute() hash-based reuse")
+
+bgc_dr_cache_clear()
+bgc_smoke_assert(
+  bgc_dr_cache_size() == 0L,
+  "cache clears to size 0"
+)
+
+counter_env <- new.env(parent = emptyenv())
+counter_env$calls <- 0L
+mk <- function() {
+  counter_env$calls <- counter_env$calls + 1L
+  counter_env$calls
+}
+
+r1 <- bgc_cached_compute(key = list("demo", iris), compute = mk)
+r2 <- bgc_cached_compute(key = list("demo", iris), compute = mk)
+bgc_smoke_assert(
+  counter_env$calls == 1L && identical(r1, 1L) && identical(r2, 1L),
+  "second call with same key hits cache and skips compute"
+)
+bgc_smoke_assert(
+  bgc_dr_cache_size() == 1L,
+  "cache size is 1 after a hit-and-miss sequence on the same key"
+)
+
+r3 <- bgc_cached_compute(key = list("demo", iris, seed = 42), compute = mk)
+bgc_smoke_assert(
+  counter_env$calls == 2L && identical(r3, 2L) && bgc_dr_cache_size() == 2L,
+  "different key (seed param) triggers recompute and grows cache"
+)
+
+mutated <- iris
+mutated$Sepal.Length[1] <- 999
+r4 <- bgc_cached_compute(key = list("demo", mutated), compute = mk)
+bgc_smoke_assert(
+  counter_env$calls == 3L && identical(r4, 3L) && bgc_dr_cache_size() == 3L,
+  "mutating the data payload invalidates the cache key"
+)
+
+bgc_dr_cache_clear()
+bgc_smoke_assert(
+  bgc_dr_cache_size() == 0L,
+  "cache clears back to size 0 after teardown"
+)
+
 bgc_smoke_report()

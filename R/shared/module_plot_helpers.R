@@ -411,6 +411,28 @@ bgc_serialize_inputs <- function(input) {
   keep
 }
 
+bgc_dr_cache_env <- new.env(parent = emptyenv())
+
+bgc_dr_cache_clear <- function() {
+  rm(list = ls(bgc_dr_cache_env, all.names = TRUE), envir = bgc_dr_cache_env)
+  invisible(NULL)
+}
+
+bgc_dr_cache_size <- function() {
+  length(ls(bgc_dr_cache_env, all.names = TRUE))
+}
+
+bgc_cached_compute <- function(key, compute) {
+  stopifnot(is.function(compute))
+  hash <- digest::digest(key, algo = "xxhash64")
+  if (exists(hash, envir = bgc_dr_cache_env, inherits = FALSE)) {
+    return(get(hash, envir = bgc_dr_cache_env))
+  }
+  result <- compute()
+  assign(hash, result, envir = bgc_dr_cache_env)
+  result
+}
+
 bgc_to_r_literal <- function(v) {
   if (is.character(v)) {
     if (length(v) == 1L) return(deparse(v))
