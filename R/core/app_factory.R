@@ -194,8 +194,11 @@ bgc_plot_tabs <- function(specs) {
 }
 
 bgc_register_plot_servers <- function(specs, group, active_tab, output) {
+  force(specs)
+  force(group)
   for (spec in specs) local({
     spec <- spec
+    group <- group
     installed <- FALSE
     body_fn <- bgc_body_fn_for(spec)
 
