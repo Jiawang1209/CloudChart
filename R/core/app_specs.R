@@ -218,6 +218,14 @@ bgc_plot_specs <- list(
       server_fun = "ggplot2_waffle_Server",
       example_data = "pie_df",
       icon = "table-cells-large"
+    ),
+    list(
+      id = "bump_plot",
+      title = "Bump Plot",
+      parameter_ui = "ggplot2_parameters_bump_UI",
+      server_fun = "ggplot2_bump_Server",
+      example_data = "line_df",
+      icon = "ranking-star"
     )
   ),
   advanced = list(
@@ -324,6 +332,14 @@ bgc_plot_specs <- list(
       server_fun = "ggplot2_ma_plot_Server",
       example_data = "violent_df",
       icon = "braille"
+    ),
+    list(
+      id = "forest_plot",
+      title = "Forest Plot",
+      parameter_ui = "ggplot2_parameters_forest_UI",
+      server_fun = "ggplot2_forest_Server",
+      example_data = "iris_df",
+      icon = "tree"
     )
   ),
   statistics = list(
@@ -652,7 +668,9 @@ bgc_module_files <- list(
     "R/modules/core/module_ggplot2_slope_chart_parameters.R",
     "R/modules/core/module_ggplot2_slope_chart.R",
     "R/modules/core/module_ggplot2_waffle_parameters.R",
-    "R/modules/core/module_ggplot2_waffle.R"
+    "R/modules/core/module_ggplot2_waffle.R",
+    "R/modules/core/module_ggplot2_bump_parameters.R",
+    "R/modules/core/module_ggplot2_bump.R"
   ),
   advanced = c(
     "R/modules/advanced/module_ggplot2_pca_plot_parameters.R",
@@ -680,7 +698,9 @@ bgc_module_files <- list(
     "R/modules/advanced/module_ggplot2_manhattan_parameters.R",
     "R/modules/advanced/module_ggplot2_manhattan.R",
     "R/modules/advanced/module_ggplot2_ma_plot_parameters.R",
-    "R/modules/advanced/module_ggplot2_ma_plot.R"
+    "R/modules/advanced/module_ggplot2_ma_plot.R",
+    "R/modules/advanced/module_ggplot2_forest_parameters.R",
+    "R/modules/advanced/module_ggplot2_forest.R"
   ),
   statistics = c(
     "R/modules/statistics/module_stats_ttest_parameters.R",
