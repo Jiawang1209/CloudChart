@@ -12,6 +12,16 @@ basic_advance_plot_body <- function(inputid, fun){
           p("Generate the static plot first, then click the button below only when you need the interactive view."),
           ggplot2_plotly_UI(id = inputid)
         )
+      ),
+      tabPanel(
+        title = "R Code",
+        fluidPage(
+          p("Best-effort ggplot2 reproduction of the plot you just built. Click Plot first, then copy this snippet to rerun the same visual outside CloudChart."),
+          verbatimTextOutput(
+            outputId = NS(inputid, "plotCode"),
+            placeholder = TRUE
+          )
+        )
       )
     )
   )

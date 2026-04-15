@@ -36,7 +36,7 @@ probe_specs <- list(
   data_tools = bgc_plot_specs$data_tools[[1]]
 )
 expected_tabs <- list(
-  plot = 4, plot_adv = 4, stats = 3, data_tools = 3
+  plot = 5, plot_adv = 5, stats = 3, data_tools = 3
 )
 
 for (probe in names(probe_specs)) {

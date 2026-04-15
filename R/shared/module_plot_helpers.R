@@ -579,6 +579,261 @@ bgc_to_r_literal <- function(v) {
   deparse(v)
 }
 
+# --- ggplot2 object -> R code (best-effort deparse) ---------------------------
+# Walks a ggplot object (the one each module stashes as `vals$p`) and emits an
+# approximately-executable R script. The goal is to show the user the
+# structure of the plot they just built -- perfect round-tripping of every
+# theme tweak is explicitly a non-goal.
+
+`%bgc_or%` <- function(a, b) if (is.null(a)) b else a
+
+bgc_deparse_expr <- function(x) {
+  if (is.null(x)) return("")
+  txt <- tryCatch(
+    paste(deparse(x, width.cutoff = 500L), collapse = " "),
+    error = function(e) "<unreadable>"
+  )
+  trimws(gsub("\\s+", " ", txt))
+}
+
+bgc_deparse_mapping <- function(mapping) {
+  if (is.null(mapping)) return("")
+  parts <- character()
+  for (nm in names(mapping)) {
+    val <- mapping[[nm]]
+    if (is.null(val)) next
+    expr <- if (rlang::is_quosure(val)) {
+      rlang::quo_get_expr(val)
+    } else if (inherits(val, "formula") && length(val) >= 2L) {
+      val[[length(val)]]
+    } else {
+      val
+    }
+    txt <- bgc_deparse_expr(expr)
+    if (!nzchar(txt)) next
+    parts <- c(parts, sprintf("%s = %s", nm, txt))
+  }
+  if (length(parts) == 0L) return("")
+  paste0("aes(", paste(parts, collapse = ", "), ")")
+}
+
+bgc_class_to_snake <- function(cls) {
+  out <- gsub("([A-Z])", "_\\1", cls)
+  sub("^_", "", tolower(out))
+}
+
+bgc_layer_fun_name <- function(layer) {
+  geom_cls <- class(layer$geom)[1]
+  stat_cls <- class(layer$stat)[1]
+  geom_name <- bgc_class_to_snake(geom_cls)
+  stat <- NULL
+  if (!is.null(stat_cls) && !identical(stat_cls, "StatIdentity")) {
+    stat <- sub("^stat_", "", bgc_class_to_snake(stat_cls))
+  }
+  list(fun = geom_name, stat = stat)
+}
+
+bgc_format_layer_arg <- function(nm, v) {
+  if (is.null(v)) return(NULL)
+  if (is.function(v)) return(NULL)
+  if (inherits(v, "ggproto")) return(NULL)
+  if (inherits(v, "Scale")) return(NULL)
+  if (is.list(v) && !is.data.frame(v)) return(NULL)
+  if (is.atomic(v) && length(v) == 0L) return(NULL)
+  sprintf("%s = %s", nm, bgc_to_r_literal(v))
+}
+
+bgc_strip_defaults <- function(fun_name, params) {
+  if (length(params) == 0L) return(params)
+  ns <- tryCatch(asNamespace("ggplot2"), error = function(e) NULL)
+  if (is.null(ns) || !exists(fun_name, envir = ns, inherits = FALSE)) return(params)
+  f <- get(fun_name, envir = ns)
+  default_args <- tryCatch(formals(f), error = function(e) NULL)
+  if (is.null(default_args)) return(params)
+
+  kept <- list()
+  for (nm in names(params)) {
+    if (!nm %in% names(default_args)) {
+      kept[[nm]] <- params[[nm]]
+      next
+    }
+    default_val <- tryCatch(
+      eval(default_args[[nm]], envir = ns),
+      error = function(e) NULL
+    )
+    if (!is.null(default_val) && identical(default_val, params[[nm]])) next
+    if (is.symbol(default_args[[nm]]) && identical(as.character(default_args[[nm]]), "")) next
+    kept[[nm]] <- params[[nm]]
+  }
+  kept
+}
+
+bgc_deparse_layer <- function(layer) {
+  info <- bgc_layer_fun_name(layer)
+  args <- character()
+
+  if (!is.null(layer$mapping) && length(layer$mapping) > 0L) {
+    m <- bgc_deparse_mapping(layer$mapping)
+    if (nzchar(m)) args <- c(args, paste0("mapping = ", m))
+  }
+
+  if (!is.null(info$stat)) {
+    args <- c(args, sprintf("stat = \"%s\"", info$stat))
+  }
+
+  pos <- layer$position
+  if (!is.null(pos)) {
+    pos_cls <- class(pos)[1]
+    if (!identical(pos_cls, "PositionIdentity")) {
+      pos_name <- sub("^position_", "", bgc_class_to_snake(pos_cls))
+      args <- c(args, sprintf("position = \"%s\"", pos_name))
+    }
+  }
+
+  aes_params <- layer$aes_params %bgc_or% list()
+  geom_params <- layer$geom_params %bgc_or% list()
+
+  merged <- c(aes_params, geom_params[setdiff(names(geom_params), names(aes_params))])
+  merged <- bgc_strip_defaults(info$fun, merged)
+
+  for (nm in names(merged)) {
+    a <- bgc_format_layer_arg(nm, merged[[nm]])
+    if (!is.null(a)) args <- c(args, a)
+  }
+
+  sprintf("%s(%s)", info$fun, paste(args, collapse = ", "))
+}
+
+bgc_deparse_scale <- function(sc) {
+  aes <- (sc$aesthetics %bgc_or% "unknown")[1]
+  name <- sc$scale_name %bgc_or% bgc_class_to_snake(class(sc)[1])
+  if (aes %in% c("x", "y") && identical(name, "position_c")) return("")
+  sprintf("scale_%s_%s()", aes, name)
+}
+
+bgc_deparse_facet <- function(facet) {
+  if (is.null(facet)) return("")
+  cls <- class(facet)[1]
+  if (identical(cls, "FacetNull")) return("")
+  params <- facet$params %bgc_or% list()
+  quo_to_txt <- function(q) bgc_deparse_expr(rlang::quo_get_expr(q))
+
+  if (identical(cls, "FacetWrap")) {
+    facets <- params$facets %bgc_or% list()
+    vars <- vapply(facets, quo_to_txt, character(1))
+    if (length(vars) == 0L) return("facet_wrap()")
+    return(sprintf("facet_wrap(vars(%s))", paste(vars, collapse = ", ")))
+  }
+
+  if (identical(cls, "FacetGrid")) {
+    row_vars <- vapply(params$rows %bgc_or% list(), quo_to_txt, character(1))
+    col_vars <- vapply(params$cols %bgc_or% list(), quo_to_txt, character(1))
+    rows_txt <- if (length(row_vars) > 0L) {
+      sprintf("rows = vars(%s)", paste(row_vars, collapse = ", "))
+    } else "rows = NULL"
+    cols_txt <- if (length(col_vars) > 0L) {
+      sprintf("cols = vars(%s)", paste(col_vars, collapse = ", "))
+    } else "cols = NULL"
+    return(sprintf("facet_grid(%s, %s)", rows_txt, cols_txt))
+  }
+
+  sprintf("%s()", bgc_class_to_snake(cls))
+}
+
+bgc_deparse_coord <- function(coord) {
+  if (is.null(coord)) return("")
+  cls <- class(coord)[1]
+  if (identical(cls, "CoordCartesian")) return("")
+  sprintf("%s()", bgc_class_to_snake(cls))
+}
+
+bgc_deparse_labels <- function(lbls) {
+  if (is.null(lbls) || length(lbls) == 0L) return("")
+  keep <- list()
+  for (nm in names(lbls)) {
+    v <- lbls[[nm]]
+    if (is.null(v)) next
+    if (is.character(v) && !nzchar(v)) next
+    keep[[nm]] <- v
+  }
+  if (length(keep) == 0L) return("")
+  parts <- vapply(names(keep), function(nm) {
+    val <- keep[[nm]]
+    txt <- if (is.character(val)) deparse(val) else bgc_deparse_expr(val)
+    sprintf("%s = %s", nm, txt)
+  }, character(1))
+  sprintf("labs(%s)", paste(parts, collapse = ", "))
+}
+
+bgc_deparse_theme <- function(theme_obj) {
+  if (is.null(theme_obj) || length(theme_obj) == 0L) return("")
+  "theme()  # CloudChart theme / text sizing applied -- see parameter snapshot"
+}
+
+bgc_ggplot_to_code <- function(p, data_name = "df") {
+  if (!inherits(p, "ggplot")) {
+    return("# Click the Plot button to generate visualization code.")
+  }
+
+  header <- c(
+    "library(ggplot2)",
+    "library(dplyr)",
+    "",
+    sprintf("# Replace %s with your data.frame, e.g.", data_name),
+    sprintf("# %s <- read.csv(\"your_file.csv\", check.names = FALSE)", data_name),
+    ""
+  )
+
+  pieces <- character()
+
+  base_mapping <- tryCatch(
+    bgc_deparse_mapping(p$mapping),
+    error = function(e) ""
+  )
+  pieces <- c(pieces, if (nzchar(base_mapping)) {
+    sprintf("ggplot(%s, %s)", data_name, base_mapping)
+  } else {
+    sprintf("ggplot(%s)", data_name)
+  })
+
+  for (layer in (p$layers %bgc_or% list())) {
+    pieces <- c(pieces, tryCatch(
+      bgc_deparse_layer(layer),
+      error = function(e) "# <layer deparse failed>"
+    ))
+  }
+
+  for (sc in (p$scales$scales %bgc_or% list())) {
+    code <- tryCatch(bgc_deparse_scale(sc), error = function(e) "")
+    if (nzchar(code)) pieces <- c(pieces, code)
+  }
+
+  for (tag in c("facet", "coord", "labs", "theme")) {
+    code <- tryCatch(
+      switch(tag,
+        facet = bgc_deparse_facet(p$facet),
+        coord = bgc_deparse_coord(p$coordinates),
+        labs  = bgc_deparse_labels(p$labels),
+        theme = bgc_deparse_theme(p$theme)
+      ),
+      error = function(e) ""
+    )
+    if (nzchar(code)) pieces <- c(pieces, code)
+  }
+
+  body_lines <- character(length(pieces))
+  body_lines[1] <- paste0("p <- ", pieces[1])
+  if (length(pieces) > 1L) {
+    body_lines[1] <- paste0(body_lines[1], " +")
+    for (i in 2:length(pieces)) {
+      suffix <- if (i < length(pieces)) " +" else ""
+      body_lines[i] <- paste0("  ", pieces[i], suffix)
+    }
+  }
+
+  c(header, body_lines, "", "print(p)")
+}
+
 bgc_reproduce_script <- function(filename_prefix, input) {
   snapshot <- bgc_serialize_inputs(input)
 
@@ -626,6 +881,18 @@ bgc_reproduce_script <- function(filename_prefix, input) {
 bind_plot_outputs <- function(output, input, plot_reactive, vals, filename_prefix, data_fn = NULL) {
   output$plotOutput <- renderPlot({
     plot_reactive()
+  })
+
+  output$plotCode <- renderText({
+    p <- vals$p
+    if (is.null(p)) {
+      return("# Click the Plot button to generate visualization code.")
+    }
+    code <- tryCatch(
+      bgc_ggplot_to_code(p),
+      error = function(e) paste("# Code extraction failed:", conditionMessage(e))
+    )
+    paste(code, collapse = "\n")
   })
 
   output$Download <- downloadHandler(
