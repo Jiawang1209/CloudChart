@@ -1,47 +1,10 @@
 basic_stats_body <- function(inputid, fun){
-  fluidPage(
-    bs4TabCard(
-      width = 12,
-      type = "pills",
-
-      tabPanel(
-        title = "Example Data",
-        fluidPage(
-          fluidRow(
-            column(
-              width = 12,
-              align = "center",
-              show_example_data_UI(id = inputid)
-            )
-          )
-        )
-      ),
-
-      tabPanel(
-        title = "Data & Parameters",
-        fluidPage(
-          fluidRow(
-            column(
-              width = 3,
-              file_upload_UI(id = inputid)
-            ),
-            column(
-              width = 9,
-              file_upload_show_UI(id = inputid)
-            )
-          )
-        ),
-        tags$hr(),
-        fluidPage(
-          get(fun)(inputid)
-        )
-      ),
-
+  bgc_tabcard_shell(
+    inputid, fun,
+    list(
       tabPanel(
         title = "Results",
-        fluidPage(
-          stats_result_UI(id = inputid)
-        )
+        fluidPage(stats_result_UI(id = inputid))
       )
     )
   )

@@ -104,11 +104,19 @@
   小数据集下 client-side 渲染成本可忽略。
 
 ### 7. UI 一致性
-- [ ] 把 `basic_advance_plot_UI` / `basic_stats_UI` / `basic_data_tools_UI`
-  抽出一个共同 shell，四类 tab 的 Example / Data / Run / Results 顺序
-  完全一致。
+- [x] 把 `basic_advance_plot_UI` / `basic_stats_UI` / `basic_data_tools_UI`
+  抽出一个共同 shell：`module_plot_helpers.R` 新增
+  `bgc_example_data_tab_panel()` / `bgc_data_params_tab_panel()` /
+  `bgc_tabcard_shell(inputid, fun, result_panels)`，三个 `*_body`
+  函数退化为只传 result panels 列表。Example Data + Data & Parameters
+  两个 tab 从此在一个地方维护，样式 / 栅格 / 上传控件改动不会再跑偏。
+  `test_lazy_boot.R` 的 nav-item 计数断言（plot=4, stats=3, data_tools=3）
+  全数保持绿。
 - [ ] 参数面板统一使用 `bgc_advanced_options()`（已存在的
-  `<details>` 组件），把 "Advanced Options" 默认收起。
+  `<details>` 组件，默认收起）：26/39 plot 参数文件已迁移；
+  剩余 13 个（density / density_2 / dount / histogram / lollipop /
+  pieplot / radar / ridgeline / smooth_line / violin / pcoa / rda / tsne）
+  待下一轮机械迁移。
 - [ ] Dark / Light 皮肤在首页 feature card、valueBox、DT 表头下都保持
   足够对比度。
 

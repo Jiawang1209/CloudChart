@@ -94,6 +94,63 @@ bgc_advanced_options <- function(...) {
   )
 }
 
+# --- Shared tab shell ---------------------------------------------------------
+# The "Example Data" and "Data & Parameters" tab panels are identical across
+# every plot / stats / data_tools body. Build them once here so all three
+# shells (basic_advance_plot_body / basic_stats_body / basic_data_tools_body)
+# stay in lockstep when we tweak the upload widget, summary layout, or
+# parameter region.
+bgc_example_data_tab_panel <- function(inputid) {
+  tabPanel(
+    title = "Example Data",
+    fluidPage(
+      fluidRow(
+        column(
+          width = 12,
+          align = "center",
+          show_example_data_UI(id = inputid)
+        )
+      )
+    )
+  )
+}
+
+bgc_data_params_tab_panel <- function(inputid, fun) {
+  tabPanel(
+    title = "Data & Parameters",
+    fluidPage(
+      fluidRow(
+        column(width = 3, file_upload_UI(id = inputid)),
+        column(width = 9, file_upload_show_UI(id = inputid))
+      )
+    ),
+    tags$hr(),
+    fluidPage(
+      get(fun)(inputid)
+    )
+  )
+}
+
+# Assemble the shared bs4TabCard shell. `result_panels` is a list of
+# `tabPanel(...)` entries rendered after the shared Example Data /
+# Data & Parameters tabs (e.g. "Plot" + "Interactive" for plots,
+# "Results" for stats, "Result" for data_tools).
+bgc_tabcard_shell <- function(inputid, fun, result_panels) {
+  panels <- c(
+    list(
+      bgc_example_data_tab_panel(inputid),
+      bgc_data_params_tab_panel(inputid, fun)
+    ),
+    result_panels
+  )
+  fluidPage(
+    do.call(
+      bs4TabCard,
+      c(list(width = 12, type = "pills"), panels)
+    )
+  )
+}
+
 bgc_preview_datatable <- function(data, digits = 4, page_length = 10) {
   if (!is.data.frame(data)) {
     data <- as.data.frame(data, stringsAsFactors = FALSE)
