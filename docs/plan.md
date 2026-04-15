@@ -43,13 +43,22 @@
   dump 当前已加载组 + 时间戳，便于排查 lazy 加载时序问题。
 
 ### 4. 文件输入体验补完
-- [ ] 上传 widget "记住上次文件名"：在 session 内缓存 `file_upload`，
-  切 tab 不重新上传。
+- [x] 上传 widget "记住上次文件名"：`bgc_session_upload_cache()` 在
+  `session$rootScope()$userData` 上挂一个共享 `reactiveVal`，
+  `uploaded_table_reactive()` 改为写入/读取该 rv，58 个调用方零改动继承。
+  切 tab 到新模块后 `df()` 直接返回上次上传的数据；若新模块需要
+  `row_names = TRUE`（PCA / UMAP / NMDS 等），通过 `bgc_cached_compute()`
+  按原始 datapath 重新解析一次并记忆。`file_upload_Server` 的 Data Summary
+  在当前模块尚未提交时展示 "`shared.csv` (shared from another tab)" 提示。
 - [x] Preview 表统一走 `DT::DTOutput` + 分页：`basic_stats_UI` /
   `basic_data_tools_UI` / `module_data_export` 的 `tableOutput` 全部迁移到
   `DT::DTOutput`，经由新的 `bgc_preview_datatable()` helper 统一走
   `server = FALSE` + `formatSignif(digits = 4)` + tryCatch 错误回退。
-- [ ] 大文件（>50MB）上传时显示 `withProgress`，而不是静默等待。
+- [x] 大文件（>50MB）上传时显示 `withProgress`：`uploaded_table_reactive()`
+  里的 `observeEvent(input$submit_file, ...)` 包一层
+  `shiny::withProgress(message = sprintf("Reading %s", fu$name), ...)`
+  含 parsing → done 两档进度，解析失败改由
+  `shiny::showNotification(..., type = "error")` 提示，不再静默等待或崩栈。
 
 ---
 

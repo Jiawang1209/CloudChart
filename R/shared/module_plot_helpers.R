@@ -271,15 +271,92 @@ bgc_analysis_input <- function(data, metadata_columns = character()) {
   )
 }
 
-uploaded_table_reactive <- function(input, row_names = FALSE) {
-  eventReactive(input$submit_file, {
-    req(input$file_upload)
-    read_uploaded_table(
-      file_upload = input$file_upload,
-      header = input$file_header,
+bgc_session_upload_cache <- function(session = shiny::getDefaultReactiveDomain()) {
+  if (is.null(session)) return(shiny::reactiveVal(NULL))
+
+  root <- tryCatch(session$rootScope(), error = function(e) session)
+  if (is.null(root)) root <- session
+
+  if (is.null(root$userData)) {
+    root$userData <- new.env(parent = emptyenv())
+  }
+  if (is.null(root$userData$bgc_upload_rv)) {
+    root$userData$bgc_upload_rv <- shiny::reactiveVal(NULL)
+  }
+  root$userData$bgc_upload_rv
+}
+
+uploaded_table_reactive <- function(input, row_names = FALSE,
+                                    session = shiny::getDefaultReactiveDomain()) {
+  cache_rv <- bgc_session_upload_cache(session)
+
+  shiny::observeEvent(input$submit_file, {
+    shiny::req(input$file_upload)
+    fu <- input$file_upload
+
+    parsed <- shiny::withProgress(
+      message = sprintf("Reading %s", fu$name),
+      value   = 0.1,
+      {
+        shiny::incProgress(0.3, detail = "parsing")
+        res <- tryCatch(
+          read_uploaded_table(
+            file_upload = fu,
+            header      = input$file_header,
+            separator   = input$file_separator,
+            quote       = input$file_quote,
+            row_names   = row_names
+          ),
+          error = function(e) {
+            shiny::showNotification(
+              paste("Upload failed:", conditionMessage(e)),
+              type = "error", duration = 8
+            )
+            NULL
+          }
+        )
+        shiny::setProgress(value = 1, detail = "done")
+        res
+      }
+    )
+
+    if (is.null(parsed)) return(NULL)
+
+    cache_rv(list(
+      name      = fu$name,
+      datapath  = fu$datapath,
+      header    = input$file_header,
       separator = input$file_separator,
-      quote = input$file_quote,
-      row_names = row_names
+      quote     = input$file_quote,
+      data      = parsed,
+      row_names = isTRUE(row_names),
+      timestamp = Sys.time()
+    ))
+  })
+
+  shiny::reactive({
+    cache <- cache_rv()
+    shiny::validate(shiny::need(
+      !is.null(cache),
+      "Upload a file and click 'Submit File!' to view the data."
+    ))
+
+    if (identical(cache$row_names, isTRUE(row_names))) {
+      return(cache$data)
+    }
+
+    bgc_cached_compute(
+      key = list("upload_reparse", cache$datapath, cache$header,
+                 cache$separator, cache$quote, isTRUE(row_names)),
+      compute = function() {
+        read_uploaded_table(
+          file_upload = list(name = cache$name, datapath = cache$datapath),
+          header      = cache$header,
+          separator   = cache$separator,
+          quote       = cache$quote,
+          row_names   = row_names
+        )
+      }
     )
   })
 }

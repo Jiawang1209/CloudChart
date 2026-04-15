@@ -93,7 +93,12 @@ file_upload_Server <- function(id){
         ))
       }
 
-      uploaded_name <- if (!is.null(input$file_upload)) input$file_upload$name else "-"
+      uploaded_name <- if (!is.null(input$file_upload)) {
+        input$file_upload$name
+      } else {
+        shared <- tryCatch(bgc_session_upload_cache(session)(), error = function(e) NULL)
+        if (!is.null(shared)) paste0(shared$name, " (shared from another tab)") else "-"
+      }
 
       fluidRow(
         column(

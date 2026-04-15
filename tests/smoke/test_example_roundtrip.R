@@ -382,4 +382,60 @@ bgc_smoke_assert(
   "cache clears back to size 0 after teardown"
 )
 
+bgc_smoke_section("bgc_session_upload_cache() session-level sharing")
+
+mk_fake_session <- function() {
+  s <- new.env(parent = emptyenv())
+  s$userData <- new.env(parent = emptyenv())
+  s$rootScope <- function() s
+  s
+}
+
+null_rv <- bgc_session_upload_cache(NULL)
+bgc_smoke_assert(
+  shiny::is.reactivevalues(null_rv) || inherits(null_rv, "reactiveVal") ||
+    is.function(null_rv),
+  "bgc_session_upload_cache(NULL) returns a reactiveVal-shaped object"
+)
+shiny::isolate(null_rv(list(name = "fallback.csv")))
+bgc_smoke_assert(
+  identical(shiny::isolate(null_rv())$name, "fallback.csv"),
+  "NULL-session reactiveVal is read/write"
+)
+
+sess <- mk_fake_session()
+rv1 <- bgc_session_upload_cache(sess)
+rv2 <- bgc_session_upload_cache(sess)
+bgc_smoke_assert(
+  identical(rv1, rv2),
+  "same session returns same reactiveVal instance"
+)
+
+shiny::isolate(rv1(list(
+  name = "shared.csv",
+  datapath = "/tmp/shared.csv",
+  header = TRUE,
+  separator = ",",
+  quote = "\"",
+  data = iris,
+  row_names = FALSE,
+  timestamp = Sys.time()
+)))
+bgc_smoke_assert(
+  identical(shiny::isolate(rv2())$name, "shared.csv"),
+  "write via one handle is visible via another (cross-module sharing)"
+)
+bgc_smoke_assert(
+  is.data.frame(shiny::isolate(rv2())$data) &&
+    nrow(shiny::isolate(rv2())$data) == nrow(iris),
+  "session cache preserves the parsed data frame"
+)
+
+sess2 <- mk_fake_session()
+rv_other <- bgc_session_upload_cache(sess2)
+bgc_smoke_assert(
+  is.null(shiny::isolate(rv_other())),
+  "different sessions get isolated reactiveVals"
+)
+
 bgc_smoke_report()
