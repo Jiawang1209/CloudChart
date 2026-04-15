@@ -44,33 +44,27 @@ ggplot2_parameters_lollipop_UI <- function(id){
                          options = list(style = "btn-primary"))
       )
     ),
-    tags$hr(),
-    fluidRow(
-      align = "center",
-      # Set  Title
-      column(width = 2, textInput(NS(id, "plot_title"), "Set plot title",value = NULL)),
-      #Set plot subtitle
-      column(width = 2, textInput(NS(id, "plot_subtitle"), "Set plot subtitle",value = NULL)),
-      #Set x Axis label
-      column(width = 2, textInput(NS(id, "x_axis_Title"), "Set x axis title",value = NULL)),
-      #Set y Axis label
-      column(width = 2, textInput(NS(id, "y_axis_Title"), "Set y axis title", value = NULL)),
-      #Set x limites
-      column(width = 2, numericRangeInput(NS(id, "x_limite"), "Set x axis limites", value = c(NULL, NULL))),
-      #Set y limites
-      column(width = 2, numericRangeInput(NS(id, "y_limite"), "Set y axis limites", value = c(NULL, NULL))),
-    ),
-    tags$hr(),
-    # Set Theme
-    prettyRadioButtons(inputId = NS(id, "theme_choose"),
-                       label = "Theme Choose:",
-                       choiceNames = c("default","theme:bw","theme:classic","theme:clean","theme:GraphPadPrism",
-                                       "theme:excel", "theme:stata","theme:economist","theme:GoogleDocs","theme:WallStreetJournal"),
-                       choiceValues = c("theme_grey", "theme_bw", "theme_classic","theme_clean", "theme_prism", "theme_excel_new",
-                                        "theme_stata", "theme_economist_white","theme_gdocs", "theme_wsj"),
-                       icon = icon("check"), #icon = icon("user")
-                       animation = "tada",
-                       inline = TRUE
+    bgc_advanced_options(
+      fluidRow(
+        align = "center",
+        column(width = 2, textInput(NS(id, "plot_title"), "Set plot title",value = NULL)),
+        column(width = 2, textInput(NS(id, "plot_subtitle"), "Set plot subtitle",value = NULL)),
+        column(width = 2, textInput(NS(id, "x_axis_Title"), "Set x axis title",value = NULL)),
+        column(width = 2, textInput(NS(id, "y_axis_Title"), "Set y axis title", value = NULL)),
+        column(width = 2, numericRangeInput(NS(id, "x_limite"), "Set x axis limites", value = c(NA, NA))),
+        column(width = 2, numericRangeInput(NS(id, "y_limite"), "Set y axis limites", value = c(NA, NA)))
+      ),
+      tags$hr(),
+      prettyRadioButtons(inputId = NS(id, "theme_choose"),
+                         label = "Theme Choose:",
+                         choiceNames = c("default","theme:bw","theme:classic","theme:clean","theme:GraphPadPrism",
+                                         "theme:excel", "theme:stata","theme:economist","theme:GoogleDocs","theme:WallStreetJournal"),
+                         choiceValues = c("theme_grey", "theme_bw", "theme_classic","theme_clean", "theme_prism", "theme_excel_new",
+                                          "theme_stata", "theme_economist_white","theme_gdocs", "theme_wsj"),
+                         icon = icon("check"),
+                         animation = "tada",
+                         inline = TRUE
+      )
     )
   )
 }

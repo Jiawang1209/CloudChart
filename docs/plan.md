@@ -112,11 +112,14 @@
   两个 tab 从此在一个地方维护，样式 / 栅格 / 上传控件改动不会再跑偏。
   `test_lazy_boot.R` 的 nav-item 计数断言（plot=4, stats=3, data_tools=3）
   全数保持绿。
-- [ ] 参数面板统一使用 `bgc_advanced_options()`（已存在的
-  `<details>` 组件，默认收起）：26/39 plot 参数文件已迁移；
-  剩余 13 个（density / density_2 / dount / histogram / lollipop /
-  pieplot / radar / ridgeline / smooth_line / violin / pcoa / rda / tsne）
-  待下一轮机械迁移。
+- [x] 参数面板统一使用 `bgc_advanced_options()`（已存在的
+  `<details>` 组件，默认收起）：本轮把 density / density_2 / dount /
+  histogram / lollipop / pieplot / rigeline / smooth_line / violin /
+  pcoa / rda / tsne 共 12 个 plot 参数文件尾部的
+  title/subtitle/axis-limits fluidRow + theme_choose + 调色板
+  radio 全部收进 `bgc_advanced_options(...)`，顺便把
+  `c(NULL, NULL)` 统一成 `c(NA, NA)`。radar 参数面板没有
+  theme/palette 尾巴，保持原样。`tests/smoke/run_all.R` 全绿。
 - [ ] Dark / Light 皮肤在首页 feature card、valueBox、DT 表头下都保持
   足够对比度。
 

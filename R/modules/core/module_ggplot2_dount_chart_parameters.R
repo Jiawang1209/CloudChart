@@ -51,27 +51,27 @@ ggplot2_parameters_dountplot_UI <- function(id){
       column(width = 3, colourInput(NS(id, "add_lable_color"), "Add Percentage Color", value = "#000000"))
     ),
 
-    tags$hr(),
-    # Set Theme
-    prettyRadioButtons(inputId = NS(id, "discrete_fill_choose"),
-                       label = "Discrete fill Palettes:",
-                       choiceNames = c("default","NPG","AAAS","NEJM","Lancet","JAMA","JCO","UCSCGB","D3","LocusZoom","IGV","UChicago"),
-                       choiceValues = c("", "scale_fill_npg","scale_fill_aaas","scale_fill_nejm","scale_fill_lancet",
-                                        "scale_fill_jama","scale_fill_jco","scale_fill_ucscgb","scale_fill_d3",
-                                        "scale_fill_locuszoom","scale_fill_igv","scale_fill_uchicago"),
-                       icon = icon("check"),
-                       animation = "tada",
-                       inline = TRUE
-    ),
-    prettyRadioButtons(inputId = NS(id, "discrete_color_choose"),
-                       label = "Discrete color Palettes:",
-                       choiceNames = c("default","NPG","AAAS","NEJM","Lancet","JAMA","JCO","UCSCGB","D3","LocusZoom","IGV","UChicago"),
-                       choiceValues = c("", "scale_color_npg","scale_color_aaas","scale_color_nejm","scale_color_lancet",
-                                        "scale_color_jama","scale_color_jco","scale_color_ucscgb","scale_color_d3",
-                                        "scale_color_locuszoom","scale_color_igv","scale_color_uchicago"),
-                       icon = icon("check"),
-                       animation = "tada",
-                       inline = TRUE
+    bgc_advanced_options(
+      prettyRadioButtons(inputId = NS(id, "discrete_fill_choose"),
+                         label = "Discrete fill Palettes:",
+                         choiceNames = c("default","NPG","AAAS","NEJM","Lancet","JAMA","JCO","UCSCGB","D3","LocusZoom","IGV","UChicago"),
+                         choiceValues = c("", "scale_fill_npg","scale_fill_aaas","scale_fill_nejm","scale_fill_lancet",
+                                          "scale_fill_jama","scale_fill_jco","scale_fill_ucscgb","scale_fill_d3",
+                                          "scale_fill_locuszoom","scale_fill_igv","scale_fill_uchicago"),
+                         icon = icon("check"),
+                         animation = "tada",
+                         inline = TRUE
+      ),
+      prettyRadioButtons(inputId = NS(id, "discrete_color_choose"),
+                         label = "Discrete color Palettes:",
+                         choiceNames = c("default","NPG","AAAS","NEJM","Lancet","JAMA","JCO","UCSCGB","D3","LocusZoom","IGV","UChicago"),
+                         choiceValues = c("", "scale_color_npg","scale_color_aaas","scale_color_nejm","scale_color_lancet",
+                                          "scale_color_jama","scale_color_jco","scale_color_ucscgb","scale_color_d3",
+                                          "scale_color_locuszoom","scale_color_igv","scale_color_uchicago"),
+                         icon = icon("check"),
+                         animation = "tada",
+                         inline = TRUE
+      )
     )
   )
 }

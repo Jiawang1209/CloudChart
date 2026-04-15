@@ -58,17 +58,17 @@ ggplot2_parameters_pieplot_UI <- function(id){
       column(width = 3, sliderInput(NS(id, "add_bar_y"), "Add Bar yaxis", value = 0, min = 0, max = 5)),
       # column(width = 2, colourInput(NS(id, "add_bar_color"), "Add Bar Color", value = "#000000"))
     ),
-    tags$hr(),
-    # Set Theme
-    prettyRadioButtons(inputId = NS(id, "discrete_fill_choose"),
-                       label = "Discrete fill Palettes:",
-                       choiceNames = c("default","NPG","AAAS","NEJM","Lancet","JAMA","JCO","UCSCGB","D3","LocusZoom","IGV","UChicago"),
-                       choiceValues = c("", "scale_fill_npg","scale_fill_aaas","scale_fill_nejm","scale_fill_lancet",
-                                        "scale_fill_jama","scale_fill_jco","scale_fill_ucscgb","scale_fill_d3",
-                                        "scale_fill_locuszoom","scale_fill_igv","scale_fill_uchicago"),
-                       icon = icon("check"),
-                       animation = "tada",
-                       inline = TRUE
+    bgc_advanced_options(
+      prettyRadioButtons(inputId = NS(id, "discrete_fill_choose"),
+                         label = "Discrete fill Palettes:",
+                         choiceNames = c("default","NPG","AAAS","NEJM","Lancet","JAMA","JCO","UCSCGB","D3","LocusZoom","IGV","UChicago"),
+                         choiceValues = c("", "scale_fill_npg","scale_fill_aaas","scale_fill_nejm","scale_fill_lancet",
+                                          "scale_fill_jama","scale_fill_jco","scale_fill_ucscgb","scale_fill_d3",
+                                          "scale_fill_locuszoom","scale_fill_igv","scale_fill_uchicago"),
+                         icon = icon("check"),
+                         animation = "tada",
+                         inline = TRUE
+      )
     )
   )
 }
