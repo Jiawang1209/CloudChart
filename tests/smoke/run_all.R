@@ -15,7 +15,8 @@ scripts <- c(
   "tests/smoke/test_module_registry.R",
   "tests/smoke/test_example_roundtrip.R",
   "tests/smoke/test_lazy_boot.R",
-  "tests/smoke/test_dt_click.R"
+  "tests/smoke/test_dt_click.R",
+  "tests/smoke/test_server_factory.R"
 )
 
 rscript <- file.path(R.home("bin"), "Rscript")
