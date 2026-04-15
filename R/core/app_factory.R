@@ -135,7 +135,7 @@ bgc_header <- function(title = "CloudChart") {
       title = title,
       color = "lightblue",
       href = "http://www.iae.cas.cn/biogeochemistry/",
-      image = "https://adminlte.io/themes/v3/dist/img/AdminLTELogo.png"
+      image = "bgc-www/CloudChart.png"
     )
   )
 }
@@ -217,7 +217,8 @@ bgc_register_plot_servers <- function(specs, group, active_tab, output) {
       tryCatch(
         get(spec$server_fun)(spec$id),
         error = function(e) {
-          message("[bgc] server_fun FAILED for ", spec$id, ": ", conditionMessage(e))
+          bgc_log("server_fun FAILED for ", spec$id, ": ", conditionMessage(e),
+                  level = "warn")
         }
       )
     }, ignoreNULL = TRUE, ignoreInit = FALSE)

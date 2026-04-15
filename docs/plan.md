@@ -36,11 +36,16 @@
   + headless 点击脚本，PR 合并前必跑。
 
 ### 3. 日志与诊断
-- [ ] 把现存所有 `cat("[bgc] …")` / `message("[bgc] …")` 统一收敛到
-  `bgc_log(..., level = "debug")`，由 `options(bgc.debug = TRUE)` 开关驱动，
-  默认关闭，避免 CI / 生产输出噪音。
-- [ ] `bgc_loaded_groups` 状态暴露一个 `bgc_debug_report()` 辅助函数，
-  dump 当前已加载组 + 时间戳，便于排查 lazy 加载时序问题。
+- [x] 把现存所有 `cat("[bgc] …")` / `message("[bgc] …")` 统一收敛到
+  `bgc_log(..., level = "debug")`：`app_bootstrap.R` 新增 `bgc_log()`，
+  debug / info 受 `options(bgc.debug = TRUE)` 门控，warn / error 始终
+  `message()`。`app_factory.R` 里 `server_fun` 失败分支改走
+  `bgc_log(..., level = "warn")`，不再在生产控制台裸喷 `[bgc]` 前缀。
+- [x] `bgc_debug_report()`：新增辅助函数，读取 `bgc_loaded_groups` +
+  `bgc_load_history`（`bgc_ensure_group_loaded` 里顺手记录 `loaded_at` /
+  `elapsed_s` / `n_pkgs`），返回 data.frame 并可选打印，便于排查
+  lazy 加载时序问题。`test_lazy_boot.R` 新增 9 条断言覆盖 debug gating
+  / warn 不受门控 / report 列完整 / 所有组被列为 loaded。
 
 ### 4. 文件输入体验补完
 - [x] 上传 widget "记住上次文件名"：`bgc_session_upload_cache()` 在
@@ -90,8 +95,10 @@
   直接返回，失命才调用真 compute。切换美化参数不触发重算，连续切到
   同一组合的降维无成本。提供 `bgc_dr_cache_clear()` / `bgc_dr_cache_size()`
   辅助 + 6 条冒烟断言覆盖命中 / key 变化 / 数据突变 / 清空。
-- [ ] 首页 logo / adminlte 图标走本地 `www/`，去掉残留的 CDN 外链
-  （离线 / 代理环境下体验不好）。
+- [x] 首页 logo / adminlte 图标走本地 `www/`：`bgc_header()` 的
+  `dashboardBrand(image = …)` 由 `https://adminlte.io/themes/v3/dist/img/AdminLTELogo.png`
+  改为已注册的 `bgc-www/CloudChart.png`，离线 / 代理环境下 header brand
+  不再 404。`R/` 下已无 http(s):// 资源外链（仅剩 href 文案链接）。
 - [x] 把 Preview / Results 的 `DT::renderDT` 降级为 `server = FALSE`，
   规避 server-side filter 的 `searchable[j] length zero` 一类 bug；
   小数据集下 client-side 渲染成本可忽略。

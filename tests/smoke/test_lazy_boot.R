@@ -78,4 +78,71 @@ bgc_smoke_assert(
           paste(all_groups, post, sep = "=", collapse = ","))
 )
 
+bgc_smoke_section("bgc_log gating")
+
+bgc_smoke_assert(
+  exists("bgc_log", mode = "function"),
+  "bgc_log helper is loaded"
+)
+
+# debug is silent when bgc.debug is FALSE / unset
+options(bgc.debug = FALSE)
+silent_msgs <- capture.output(
+  bgc_log("should-not-appear", level = "debug"),
+  type = "message"
+)
+bgc_smoke_assert(
+  length(silent_msgs) == 0L,
+  sprintf("debug level is silent when bgc.debug=FALSE (got %d lines)",
+          length(silent_msgs))
+)
+
+# debug emits when the option is on
+options(bgc.debug = TRUE)
+debug_msgs <- capture.output(
+  bgc_log("hello-debug", level = "debug"),
+  type = "message"
+)
+bgc_smoke_assert(
+  any(grepl("hello-debug", debug_msgs, fixed = TRUE)),
+  "debug level emits when bgc.debug=TRUE"
+)
+options(bgc.debug = FALSE)
+
+# warn always emits, even when gated off
+warn_msgs <- capture.output(
+  bgc_log("boom", level = "warn"),
+  type = "message"
+)
+bgc_smoke_assert(
+  any(grepl("boom", warn_msgs, fixed = TRUE)),
+  "warn level emits regardless of bgc.debug flag"
+)
+
+bgc_smoke_section("bgc_debug_report")
+
+bgc_smoke_assert(
+  exists("bgc_debug_report", mode = "function"),
+  "bgc_debug_report helper is loaded"
+)
+
+report <- suppressWarnings(
+  utils::capture.output(bgc_debug_report(print = TRUE))
+)
+df <- bgc_debug_report(print = FALSE)
+bgc_smoke_assert(
+  is.data.frame(df) && all(c("group", "loaded", "loaded_at", "elapsed_s", "n_pkgs") %in% names(df)),
+  "bgc_debug_report returns a data.frame with expected columns"
+)
+bgc_smoke_assert(
+  nrow(df) >= length(all_groups) &&
+    all(all_groups %in% df$group) &&
+    all(df$loaded[df$group %in% all_groups]),
+  "bgc_debug_report lists all probed groups as loaded"
+)
+bgc_smoke_assert(
+  any(grepl("lazy-loader state", report, fixed = TRUE)),
+  "bgc_debug_report prints a header when print=TRUE"
+)
+
 bgc_smoke_report()
