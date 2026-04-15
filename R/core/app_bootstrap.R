@@ -51,21 +51,40 @@ bgc_ensure_group_loaded <- function(group) {
   if (isTRUE(bgc_loaded_groups[[group]])) return(invisible(FALSE))
   pkgs <- bgc_group_packages[[group]]
   t0 <- Sys.time()
+  failed <- character()
   if (length(pkgs) > 0) {
     for (p in pkgs) {
-      suppressPackageStartupMessages(
-        library(p, character.only = TRUE)
+      ok <- tryCatch(
+        {
+          suppressPackageStartupMessages(
+            library(p, character.only = TRUE)
+          )
+          TRUE
+        },
+        error = function(e) {
+          bgc_log("group '", group, "' failed to attach '", p, "': ",
+                  conditionMessage(e), level = "warn")
+          FALSE
+        }
       )
+      if (!isTRUE(ok)) failed <- c(failed, p)
     }
   }
-  bgc_loaded_groups[[group]] <- TRUE
+  if (length(failed) == 0L) {
+    bgc_loaded_groups[[group]] <- TRUE
+  } else {
+    bgc_log("group '", group, "' partial load; missing: ",
+            paste(failed, collapse = ", "), level = "warn")
+  }
   bgc_load_history[[group]] <- list(
     loaded_at = t0,
     elapsed_s = as.numeric(difftime(Sys.time(), t0, units = "secs")),
-    n_pkgs    = length(pkgs)
+    n_pkgs    = length(pkgs),
+    failed    = failed
   )
-  bgc_log("group loaded: ", group, " (", length(pkgs), " pkgs)", level = "debug")
-  invisible(TRUE)
+  bgc_log("group loaded: ", group, " (", length(pkgs) - length(failed), "/",
+          length(pkgs), " pkgs)", level = "debug")
+  invisible(length(failed) == 0L)
 }
 
 # ---- Logging ----------------------------------------------------------------

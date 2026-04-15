@@ -202,9 +202,27 @@ bgc_register_plot_servers <- function(specs, group, active_tab, output) {
     observeEvent(active_tab(), {
       if (!identical(active_tab(), spec$id)) return()
       if (installed) return()
-      installed <<- TRUE
 
-      bgc_ensure_group_loaded(group)
+      bgc_log("tab click: ", spec$id, " (group=", group, ")", level = "info")
+      loaded_ok <- tryCatch(
+        bgc_ensure_group_loaded(group),
+        error = function(e) {
+          bgc_log("ensure_group_loaded('", group, "') FAILED for ",
+                  spec$id, ": ", conditionMessage(e), level = "warn")
+          FALSE
+        }
+      )
+      if (!isTRUE(bgc_loaded_groups[[group]])) {
+        bgc_log("spec ", spec$id, " aborted: group '", group,
+                "' not fully loaded", level = "warn")
+        return()
+      }
+      bgc_log("search path has ggplot2? ",
+              "package:ggplot2" %in% search(),
+              " | exists(ggplot)? ",
+              exists("ggplot", mode = "function", inherits = TRUE),
+              level = "info")
+      installed <<- TRUE
 
       output[[paste0(spec$id, "-tab_body")]] <- renderUI({
         body_fn(spec$id, spec$parameter_ui)
